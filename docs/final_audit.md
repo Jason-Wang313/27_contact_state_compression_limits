@@ -29,3 +29,9 @@
 Additional audit notes:
 - ICLR template status: `official_template_ready`.
 - Git publish details: Repository pushed.
+
+## Orchestrator Desktop Copy
+
+Checked: 2026-06-11 21:21:50 +01:00
+Downloads PDF: C:/Users/wangz/Downloads/27.pdf
+Result: copy script exit 0 log C:\Users\wangz\robotics_60_paper_batch\logs\desktop_copy_27_20260611_212146.log
