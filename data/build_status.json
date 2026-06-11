@@ -1,0 +1,29 @@
+﻿{
+    "status":  "complete",
+    "paper_dir":  "C:\\Users\\wangz\\robotics_60_paper_batch\\27_contact_state_compression_limits\\paper",
+    "downloads_pdf":  "C:/Users/wangz/Downloads/27.pdf",
+    "steps":  [
+                  {
+                      "name":  "pdflatex1",
+                      "exit_code":  0,
+                      "log":  "C:\\Users\\wangz\\robotics_60_paper_batch\\27_contact_state_compression_limits\\paper\\build_pdflatex1.log"
+                  },
+                  {
+                      "name":  "bibtex",
+                      "exit_code":  0,
+                      "log":  "C:\\Users\\wangz\\robotics_60_paper_batch\\27_contact_state_compression_limits\\paper\\build_bibtex.log"
+                  },
+                  {
+                      "name":  "pdflatex2",
+                      "exit_code":  0,
+                      "log":  "C:\\Users\\wangz\\robotics_60_paper_batch\\27_contact_state_compression_limits\\paper\\build_pdflatex2.log"
+                  },
+                  {
+                      "name":  "pdflatex3",
+                      "exit_code":  0,
+                      "log":  "C:\\Users\\wangz\\robotics_60_paper_batch\\27_contact_state_compression_limits\\paper\\build_pdflatex3.log"
+                  }
+              ],
+    "copied":  true,
+    "removed_local_pdf":  true
+}

@@ -1,0 +1,16 @@
+{
+  "status": "complete",
+  "summary_rows": 8,
+  "episode_rows": 6856,
+  "policy_rows": 3912,
+  "figures": [
+    "aliasing_heatmap.pdf",
+    "aliasing_heatmap.png",
+    "contact_cones_alias.pdf",
+    "contact_cones_alias.png",
+    "empty_intersection_rate.pdf",
+    "empty_intersection_rate.png",
+    "success_vs_bits.pdf",
+    "success_vs_bits.png"
+  ]
+}

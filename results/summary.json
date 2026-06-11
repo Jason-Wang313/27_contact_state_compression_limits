@@ -1,0 +1,98 @@
+[
+  {
+    "representation": "contact_count",
+    "groups": 1,
+    "bits": 0,
+    "mean_group_size": 64.0,
+    "max_group_size": 64,
+    "success_rate": 0.7199533255542591,
+    "raw_possible_cases": 857,
+    "destroyed_episode_rate": 1.0,
+    "empty_intersection_rate": 1.0,
+    "mean_regret": 0.21588569675704652
+  },
+  {
+    "representation": "normal_2",
+    "groups": 2,
+    "bits": 1,
+    "mean_group_size": 32.0,
+    "max_group_size": 32,
+    "success_rate": 0.8786464410735122,
+    "raw_possible_cases": 857,
+    "destroyed_episode_rate": 0.691948658109685,
+    "empty_intersection_rate": 0.5625,
+    "mean_regret": 0.19239739064778633
+  },
+  {
+    "representation": "normal_4",
+    "groups": 4,
+    "bits": 2,
+    "mean_group_size": 16.0,
+    "max_group_size": 16,
+    "success_rate": 0.9801633605600933,
+    "raw_possible_cases": 857,
+    "destroyed_episode_rate": 0.073512252042007,
+    "empty_intersection_rate": 0.10526315789473684,
+    "mean_regret": 0.19014810928973522
+  },
+  {
+    "representation": "normal_8",
+    "groups": 8,
+    "bits": 3,
+    "mean_group_size": 8.0,
+    "max_group_size": 9,
+    "success_rate": 0.9941656942823804,
+    "raw_possible_cases": 857,
+    "destroyed_episode_rate": 0.01633605600933489,
+    "empty_intersection_rate": 0.03937007874015748,
+    "mean_regret": 0.10418814831436314
+  },
+  {
+    "representation": "normal_16",
+    "groups": 16,
+    "bits": 4,
+    "mean_group_size": 4.0,
+    "max_group_size": 5,
+    "success_rate": 0.9941656942823804,
+    "raw_possible_cases": 857,
+    "destroyed_episode_rate": 0.01633605600933489,
+    "empty_intersection_rate": 0.02242152466367713,
+    "mean_regret": 0.05925403611731566
+  },
+  {
+    "representation": "normal8_mu2",
+    "groups": 16,
+    "bits": 4,
+    "mean_group_size": 4.0,
+    "max_group_size": 5,
+    "success_rate": 0.9988331388564761,
+    "raw_possible_cases": 857,
+    "destroyed_episode_rate": 0.002333722287047841,
+    "empty_intersection_rate": 0.004329004329004329,
+    "mean_regret": 0.06468717409132
+  },
+  {
+    "representation": "cone_signature_repair",
+    "groups": 52,
+    "bits": 6,
+    "mean_group_size": 1.2307692307692308,
+    "max_group_size": 2,
+    "success_rate": 0.9988331388564761,
+    "raw_possible_cases": 857,
+    "destroyed_episode_rate": 0.002333722287047841,
+    "empty_intersection_rate": 0.006666666666666667,
+    "mean_regret": 0.007589017200301177
+  },
+  {
+    "representation": "raw_mode",
+    "groups": 64,
+    "bits": 6,
+    "mean_group_size": 1.0,
+    "max_group_size": 1,
+    "success_rate": 1.0,
+    "raw_possible_cases": 857,
+    "destroyed_episode_rate": 0.0,
+    "empty_intersection_rate": 0.0,
+    "mean_regret": 0.0
+  }
+]

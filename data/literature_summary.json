@@ -1,0 +1,45 @@
+{
+  "landscape_count": 1000,
+  "serious_skim_count": 300,
+  "deep_read_count": 225,
+  "hostile_count": 100,
+  "top_tags": [
+    [
+      "general_robotics_contact",
+      525
+    ],
+    [
+      "hybrid_contact_control",
+      291
+    ],
+    [
+      "contact_rich_manipulation",
+      155
+    ],
+    [
+      "simulation_models",
+      40
+    ],
+    [
+      "planar_pushing",
+      30
+    ],
+    [
+      "tactile_state_estimation",
+      23
+    ],
+    [
+      "state_abstraction",
+      18
+    ],
+    [
+      "locomotion_contact",
+      8
+    ],
+    [
+      "trajectory_optimization",
+      5
+    ]
+  ],
+  "chosen_thesis": "Contact-state compression is safe only when alias classes preserve task-feasible action-cone intersections; repair by control-cone signatures."
+}
