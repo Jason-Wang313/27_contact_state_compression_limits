@@ -1,0 +1,92 @@
+﻿{
+    "status":  "complete",
+    "repo_name":  "27_contact_state_compression_limits",
+    "commands":  [
+                     {
+                         "name":  "git_config_email",
+                         "exe":  "git",
+                         "args":  "config user.email",
+                         "exit_code":  0,
+                         "output":  "codex-robotics-batch@example.invalid"
+                     },
+                     {
+                         "name":  "git_config_name",
+                         "exe":  "git",
+                         "args":  "config user.name",
+                         "exit_code":  0,
+                         "output":  "Codex Robotics Batch"
+                     },
+                     {
+                         "name":  "git_add",
+                         "exe":  "git",
+                         "args":  "add -A",
+                         "exit_code":  0,
+                         "output":  "git.exe : warning: in the working copy of \u0027README.md\u0027, LF will be replaced by CRLF the next time Git touches it\r\nAt C:\\Users\\wangz\\robotics_60_paper_batch\\27_contact_state_compression_limits\\scripts\\publish_repo.ps1:26 char:19\r\n+         $output = \u0026 $Exe @ArgList 2\u003e\u00261\r\n+                   ~~~~~~~~~~~~~~~~~~~~\r\n    + CategoryInfo          : NotSpecified: (warning: in the... Git touches it:String) [], RemoteException\r\n    + FullyQualifiedErrorId : NativeCommandError\r\n \r\nwarning: in the working copy of \u0027child_status.md\u0027, LF will be replaced by CRLF the next time Git touches it\r\nwarning: in the working copy of \u0027paper/iclr2026_conference.bst\u0027, LF will be replaced by CRLF the next time Git touches \r\nit\r\nwarning: in the working copy of \u0027paper/iclr2026_conference.sty\u0027, LF will be replaced by CRLF the next time Git touches \r\nit\r\nwarning: in the working copy of \u0027paper/iclr2026_conference.tex\u0027, LF will be replaced by CRLF the next time Git touches \r\nit\r\nwarning: in the working copy of \u0027paper/math_commands.tex\u0027, LF will be replaced by CRLF the next time Git touches it\r\nwarning: in the working copy of \u0027plan.md\u0027, LF will be replaced by CRLF the next time Git touches it\r\nwarning: in the working copy of \u0027requirements.txt\u0027, LF will be replaced by CRLF the next time Git touches it\r\nwarning: in the working copy of \u0027scripts/build_pdf.ps1\u0027, LF will be replaced by CRLF the next time Git touches it\r\nwarning: in the working copy of \u0027scripts/literature_sweep.py\u0027, LF will be replaced by CRLF the next time Git touches it\r\nwarning: in the working copy of \u0027scripts/publish_repo.ps1\u0027, LF will be replaced by CRLF the next time Git touches it\r\nwarning: in the working copy of \u0027scripts/run_experiments.py\u0027, LF will be replaced by CRLF the next time Git touches it\r\nwarning: in the working copy of \u0027scripts/write_final_audit.py\u0027, LF will be replaced by CRLF the next time Git touches \r\nit\r\nwarning: in the working copy of \u0027scripts/write_paper.py\u0027, LF will be replaced by CRLF the next time Git touches it\r\nwarning: in the working copy of \u0027src/contact_compression.py\u0027, LF will be replaced by CRLF the next time Git touches it"
+                     },
+                     {
+                         "name":  "git_commit",
+                         "exe":  "git",
+                         "args":  "commit -m Add contact state compression limits paper package",
+                         "exit_code":  0,
+                         "output":  "[master (root-commit) 97bbc2e] Add contact state compression limits paper package\r\n 48 files changed, 26629 insertions(+)\r\n create mode 100644 .gitignore\r\n create mode 100644 README.md\r\n create mode 100644 child_status.md\r\n create mode 100644 data/build_status.json\r\n create mode 100644 data/deep_read_works.json\r\n create mode 100644 data/experiment_status.json\r\n create mode 100644 data/hostile_works.json\r\n create mode 100644 data/literature_progress.json\r\n create mode 100644 data/literature_summary.json\r\n create mode 100644 data/paper_status.json\r\n create mode 100644 data/template_status.json\r\n create mode 100644 docs/claims.md\r\n create mode 100644 docs/experiment_report.md\r\n create mode 100644 docs/hostile_prior_work.md\r\n create mode 100644 docs/literature_map.md\r\n create mode 100644 docs/literature_retrieval_warning.md\r\n create mode 100644 docs/novelty_boundary_map.md\r\n create mode 100644 docs/novelty_decision.md\r\n create mode 100644 docs/related_work_matrix.csv\r\n create mode 100644 docs/reviewer_attacks.md\r\n create mode 100644 figures/aliasing_heatmap.pdf\r\n create mode 100644 figures/aliasing_heatmap.png\r\n create mode 100644 figures/contact_cones_alias.pdf\r\n create mode 100644 figures/contact_cones_alias.png\r\n create mode 100644 figures/empty_intersection_rate.pdf\r\n create mode 100644 figures/empty_intersection_rate.png\r\n create mode 100644 figures/success_vs_bits.pdf\r\n create mode 100644 figures/success_vs_bits.png\r\n create mode 100644 paper/iclr2026_conference.bst\r\n create mode 100644 paper/iclr2026_conference.sty\r\n create mode 100644 paper/iclr2026_conference.tex\r\n create mode 100644 paper/main.tex\r\n create mode 100644 paper/math_commands.tex\r\n create mode 100644 paper/references.bib\r\n create mode 100644 paper/template_source.md\r\n create mode 100644 plan.md\r\n create mode 100644 requirements.txt\r\n create mode 100644 results/episode_results.csv\r\n create mode 100644 results/policy_results.csv\r\n create mode 100644 results/summary.csv\r\n create mode 100644 results/summary.json\r\n create mode 100644 scripts/build_pdf.ps1\r\n create mode 100644 scripts/literature_sweep.py\r\n create mode 100644 scripts/publish_repo.ps1\r\n create mode 100644 scripts/run_experiments.py\r\n create mode 100644 scripts/write_final_audit.py\r\n create mode 100644 scripts/write_paper.py\r\n create mode 100644 src/contact_compression.py"
+                     },
+                     {
+                         "name":  "git_branch_main",
+                         "exe":  "git",
+                         "args":  "branch -M main",
+                         "exit_code":  0,
+                         "output":  ""
+                     },
+                     {
+                         "name":  "gh_auth_status",
+                         "exe":  "gh",
+                         "args":  "auth status",
+                         "exit_code":  0,
+                         "output":  "github.com\r\n  ✓ Logged in to github.com account Jason-Wang313 (keyring)\r\n  - Active account: true\r\n  - Git operations protocol: https\r\n  - Token: gho_************************************\r\n  - Token scopes: \u0027gist\u0027, \u0027read:org\u0027, \u0027repo\u0027"
+                     },
+                     {
+                         "name":  "gh_user",
+                         "exe":  "gh",
+                         "args":  "api user --jq .login",
+                         "exit_code":  0,
+                         "output":  "Jason-Wang313"
+                     },
+                     {
+                         "name":  "gh_repo_view",
+                         "exe":  "gh",
+                         "args":  "repo view Jason-Wang313/27_contact_state_compression_limits --json url --jq .url",
+                         "exit_code":  1,
+                         "output":  "gh.exe : GraphQL: Could not resolve to a Repository with the name \u0027Jason-Wang313/27_contact_state_compression_limits\u0027. \r\n(repository)\r\nAt C:\\Users\\wangz\\robotics_60_paper_batch\\27_contact_state_compression_limits\\scripts\\publish_repo.ps1:26 char:19\r\n+         $output = \u0026 $Exe @ArgList 2\u003e\u00261\r\n+                   ~~~~~~~~~~~~~~~~~~~~\r\n    + CategoryInfo          : NotSpecified: (GraphQL: Could ...\u0027. (repository):String) [], RemoteException\r\n    + FullyQualifiedErrorId : NativeCommandError"
+                     },
+                     {
+                         "name":  "gh_repo_create",
+                         "exe":  "gh",
+                         "args":  "repo create 27_contact_state_compression_limits --public --description Paper 27: Contact State Compression Limits",
+                         "exit_code":  0,
+                         "output":  "https://github.com/Jason-Wang313/27_contact_state_compression_limits"
+                     },
+                     {
+                         "name":  "git_remote_get",
+                         "exe":  "git",
+                         "args":  "remote get-url origin",
+                         "exit_code":  2,
+                         "output":  "git.exe : error: No such remote \u0027origin\u0027\r\nAt C:\\Users\\wangz\\robotics_60_paper_batch\\27_contact_state_compression_limits\\scripts\\publish_repo.ps1:26 char:19\r\n+         $output = \u0026 $Exe @ArgList 2\u003e\u00261\r\n+                   ~~~~~~~~~~~~~~~~~~~~\r\n    + CategoryInfo          : NotSpecified: (error: No such remote \u0027origin\u0027:String) [], RemoteException\r\n    + FullyQualifiedErrorId : NativeCommandError"
+                     },
+                     {
+                         "name":  "git_remote_add",
+                         "exe":  "git",
+                         "args":  "remote add origin https://github.com/Jason-Wang313/27_contact_state_compression_limits.git",
+                         "exit_code":  0,
+                         "output":  ""
+                     },
+                     {
+                         "name":  "git_push",
+                         "exe":  "git",
+                         "args":  "push -u origin main",
+                         "exit_code":  0,
+                         "output":  "git.exe : To https://github.com/Jason-Wang313/27_contact_state_compression_limits.git\r\nAt C:\\Users\\wangz\\robotics_60_paper_batch\\27_contact_state_compression_limits\\scripts\\publish_repo.ps1:26 char:19\r\n+         $output = \u0026 $Exe @ArgList 2\u003e\u00261\r\n+                   ~~~~~~~~~~~~~~~~~~~~\r\n    + CategoryInfo          : NotSpecified: (To https://gith...sion_limits.git:String) [], RemoteException\r\n    + FullyQualifiedErrorId : NativeCommandError\r\n \r\n * [new branch]      main -\u003e main\r\nbranch \u0027main\u0027 set up to track \u0027origin/main\u0027."
+                     }
+                 ],
+    "github_url":  "https://github.com/Jason-Wang313/27_contact_state_compression_limits",
+    "message":  "Repository pushed"
+}
