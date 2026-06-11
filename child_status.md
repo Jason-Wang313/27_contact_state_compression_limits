@@ -39,3 +39,7 @@ Recovery steps:
 
 Next:
 - Commit and push `docs/final_audit.md`, `data/git_push_status.json`, updated scripts, and this status file.
+
+Exit code: 0
+End time: 2026-06-11 21:21:46 +01:00
+PDF exists: True
