@@ -1,0 +1,15 @@
+{
+  "source": "ICLR/Master-Template iclr2026.zip",
+  "urls": [
+    "https://raw.githubusercontent.com/ICLR/Master-Template/master/iclr2026.zip",
+    "https://github.com/ICLR/Master-Template/raw/master/iclr2026.zip"
+  ],
+  "status": "official_template_ready",
+  "files": [
+    "iclr2026_conference.bst",
+    "iclr2026_conference.sty",
+    "iclr2026_conference.tex",
+    "math_commands.tex"
+  ],
+  "download_url": "https://raw.githubusercontent.com/ICLR/Master-Template/master/iclr2026.zip"
+}
