@@ -18,14 +18,28 @@
 | cone_signature_repair | 52 | 6 | 0.999 | 0.007 | 0.002 | 0.008 |
 | raw_mode | 64 | 6 | 1.000 | 0.000 | 0.000 | 0.000 |
 
+## V2 Signature-Budget Stress
+
+The submission-hardening stress test reruns the CCSC repair with fewer probe tasks and coarser action sectors. It shows that CCSC is conditional on a sufficiently rich action/task signature, not a free compression guarantee.
+
+| Signature budget | Probe tasks | Action sectors | Groups | Bits | Success | Empty-intersection rate | Mean regret |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| one_task_two_sectors | 1 | 2 | 4 | 2 | 0.931 | 0.260 | 0.167 |
+| one_task_four_sectors | 1 | 4 | 7 | 3 | 0.943 | 0.184 | 0.137 |
+| two_tasks_two_sectors | 2 | 2 | 8 | 3 | 0.956 | 0.112 | 0.162 |
+| two_tasks_four_sectors | 2 | 4 | 14 | 4 | 0.977 | 0.067 | 0.097 |
+| v1_six_tasks_eight_sectors | 6 | 8 | 52 | 6 | 0.999 | 0.007 | 0.008 |
+
 ## Interpretation
-Contact-count compression merges all local modes and frequently leaves no action that is feasible for every possible true contact. Coarser normal bins reduce but do not remove the problem. The cone-signature repair splits modes only when their feasible-action signatures differ, which recovers most raw-mode success without using exact mode identity.
+Contact-count compression merges all local modes and frequently leaves no action that is feasible for every possible true contact. Coarser normal bins reduce but do not remove the problem. The cone-signature repair splits modes only when their feasible-action signatures differ, which recovers most raw-mode success without using exact mode identity. The v2 stress test also exposes the repair's own boundary: a low-budget signature under-separates control cones and leaves many empty aliases.
 
 ## Generated Artifacts
 - `results/summary.json`
 - `results/summary.csv`
 - `results/episode_results.csv`
 - `results/policy_results.csv`
+- `results/signature_budget_stress.csv`
+- `results/signature_budget_stress_table.tex`
 - `figures/success_vs_bits.pdf`
 - `figures/empty_intersection_rate.pdf`
 - `figures/aliasing_heatmap.pdf`

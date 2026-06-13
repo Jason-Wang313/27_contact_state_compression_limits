@@ -7,6 +7,7 @@
 *.log
 *.out
 *.synctex.gz
+paper/template_download/
 data/*raw*.json
 data/*raw*.jsonl
 data/*cache*.json

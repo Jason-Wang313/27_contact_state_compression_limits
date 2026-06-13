@@ -8,3 +8,4 @@
 6. Attack: The repair needs a contact model. Response: Yes. The paper marks this as a weakness and suggests tactile/action-labeled estimation as future work, but does not hide it behind a learned black box.
 7. Attack: Empty intersection is too conservative. Response: Conservative by design for robust control. The paper also reports average-action baselines to show where non-robust compression fails.
 8. Attack: The repair may approach raw mode identity. Response: Experiments report bit counts; in the tested library the signature groups are smaller than raw identity but larger than contact count.
+9. Attack: CCSC works only because the signature probes are hand-picked and rich. Response: The v2 stress accepts this boundary. With one probe task and two action sectors, success falls to 0.931 and empty-alias rate rises to 0.260; the paper now claims CCSC only as a probe-rich representation test, not as a free compression guarantee.

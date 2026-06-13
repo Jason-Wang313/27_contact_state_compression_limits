@@ -1,6 +1,7 @@
 {
   "status": "complete",
   "summary_rows": 8,
+  "signature_budget_stress_rows": 5,
   "episode_rows": 6856,
   "policy_rows": 3912,
   "figures": [
