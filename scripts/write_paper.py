@@ -246,6 +246,14 @@ def load_summary() -> List[Dict[str, str]]:
         return list(csv.DictReader(f))
 
 
+def load_signature_stress() -> List[Dict[str, str]]:
+    path = RESULTS / "signature_budget_stress.csv"
+    if not path.exists():
+        return []
+    with path.open("r", encoding="utf-8") as f:
+        return list(csv.DictReader(f))
+
+
 def row_by_name(rows: Iterable[Dict[str, str]], name: str) -> Dict[str, str]:
     for row in rows:
         if row.get("representation") == name:
@@ -282,11 +290,22 @@ def latex_summary_table(rows: List[Dict[str, str]]) -> str:
     return "\n".join(lines)
 
 
+def stress_row(rows: Iterable[Dict[str, str]], budget: str) -> Dict[str, str]:
+    for row in rows:
+        if row.get("budget") == budget:
+            return row
+    return {}
+
+
 def write_references() -> None:
     (PAPER / "references.bib").write_text(MANUAL_BIB.strip() + "\n", encoding="utf-8")
 
 
-def write_main_tex(summary_rows: List[Dict[str, str]], template_status: Dict[str, object]) -> None:
+def write_main_tex(
+    summary_rows: List[Dict[str, str]],
+    template_status: Dict[str, object],
+    stress_rows: List[Dict[str, str]],
+) -> None:
     cc = row_by_name(summary_rows, "contact_count")
     repair = row_by_name(summary_rows, "cone_signature_repair")
     raw = row_by_name(summary_rows, "raw_mode")
@@ -304,6 +323,11 @@ def write_main_tex(summary_rows: List[Dict[str, str]], template_status: Dict[str
 
     summary_table = latex_summary_table(summary_rows)
     template_note = tex_escape(str(template_status.get("status", "unknown")))
+    low_budget = stress_row(stress_rows, "one_task_two_sectors")
+    full_budget = stress_row(stress_rows, "v1_six_tasks_eight_sectors")
+    low_success = float(low_budget.get("success_rate", 0.0))
+    low_empty = float(low_budget.get("empty_intersection_rate", 0.0))
+    full_empty = float(full_budget.get("empty_intersection_rate", 0.0))
 
     tex = rf"""
 \documentclass{{article}}
@@ -327,8 +351,11 @@ Paper under double-blind review}}
 \begin{{document}}
 \maketitle
 
+\paragraph{{Submission-hardening version: v2.}}
+This revision adds a signature-budget stress test for the CCSC repair. With only one probe task and two action sectors, CCSC success falls to {low_success:.3f} and the empty-alias rate rises to {low_empty:.3f}; the six-probe/eight-sector setting has empty-alias rate {full_empty:.3f}. The supported claim is therefore conditional on a sufficiently rich action/task probe signature.
+
 \begin{{abstract}}
-Robots often compress contact state before planning or feedback control: a world model may keep only ``in contact'', a tactile encoder may keep a semantic label, or a planner may bin many contact geometries into one mode. This paper studies when that compression is not merely lossy but control-destroying. We show that if a compressed contact state aliases modes whose task-feasible action sets have empty intersection, no deterministic controller that observes only the compressed state can guarantee the local task for all aliased modes. The result suggests a repair: compress contact by control-cone signatures, splitting only those aliases that change the feasible action cone. A runnable friction-cone experiment shows the mechanism directly. Contact-count compression succeeds on {cc_success:.1%} of raw-controllable local tasks and has an empty-intersection rate of {cc_empty:.1%}; the proposed cone-signature repair uses {repair_bits} bits over {repair_groups} groups and recovers {repair_success:.1%} success, close to raw mode identity at {raw_success:.1%}. The contribution is a small but sharp representational test for contact-rich robot world models: prediction-faithful compression is not enough when contact changes which actions are possible.
+Robots often compress contact state before planning or feedback control: a world model may keep only ``in contact'', a tactile encoder may keep a semantic label, or a planner may bin many contact geometries into one mode. This paper studies when that compression is not merely lossy but control-destroying. We show that if a compressed contact state aliases modes whose task-feasible action sets have empty intersection, no deterministic controller that observes only the compressed state can guarantee the local task for all aliased modes. The result suggests a repair: compress contact by control-cone signatures, splitting only those aliases that change the feasible action cone. A runnable friction-cone experiment shows the mechanism directly. Contact-count compression succeeds on {cc_success:.1%} of raw-controllable local tasks and has an empty-intersection rate of {cc_empty:.1%}; the proposed cone-signature repair uses {repair_bits} bits over {repair_groups} groups and recovers {repair_success:.1%} success, close to raw mode identity at {raw_success:.1%}. A v2 stress test shows that underspecified signatures fail: one probe task with two action sectors leaves empty aliases at {low_empty:.1%}. The contribution is a small but sharp representational test for contact-rich robot world models: prediction-faithful compression is not enough when contact changes which actions are possible.
 \end{{abstract}}
 
 \section{{Introduction}}
@@ -414,11 +441,21 @@ We instantiate a local point-contact model with 64 modes, each defined by a cont
 
 The experiment supports the theorem's mechanism. The coarse representations do not fail because the local dynamics are hard to optimize; the policy is given the best group action by exhaustive search over action directions. They fail because the alias class itself has no common feasible action. CCSC improves success by splitting aliases along the same object that appears in the proof: feasible action signatures.
 
+\paragraph{{V2 signature-budget stress.}}
+The main CCSC result uses six probe task directions and eight action sectors. To test whether the repair is robust to an underspecified signature, we rerun CCSC with coarser probe budgets. Table~\ref{{tab:budget-stress}} shows that one probe task and two action sectors leave substantial aliasing: success falls to {low_success:.3f}, empty-alias rate rises to {low_empty:.3f}, and mean regret rises. CCSC therefore needs enough task/action probes to separate the control cones; it is not a free compression theorem.
+
+\begin{{table}}[t]
+\centering
+\caption{{V2 signature-budget stress. Coarse probe signatures can under-separate control cones even though they use fewer bits.}}
+\label{{tab:budget-stress}}
+\input{{../results/signature_budget_stress_table.tex}}
+\end{{table}}
+
 \section{{Limitations}}
-The evidence is local and model-based. It does not prove that a particular robot foundation model currently destroys contact controllability, nor does it validate CCSC on hardware. The theorem is one-step and deterministic; if the robot can safely probe, maintain a belief, or delay the task, some aliases may become recoverable. The repair also needs a source of action-feasibility labels. These limitations are acceptable for the paper's central claim: before adding more planning machinery, a contact representation should be tested for control-faithful alias classes.
+The evidence is local and model-based. It does not prove that a particular robot foundation model currently destroys contact controllability, nor does it validate CCSC on hardware. The theorem is one-step and deterministic; if the robot can safely probe, maintain a belief, or delay the task, some aliases may become recoverable. The repair also needs a source of action-feasibility labels and a sufficiently rich task/action probe signature. These limitations are acceptable for the paper's central claim: before adding more planning machinery, a contact representation should be tested for control-faithful alias classes.
 
 \section{{Reproducibility Statement}}
-The repository contains the full sweep, experiment, and build scripts. The literature matrix is in \texttt{{docs/related\_work\_matrix.csv}}. Experiment outputs are in \texttt{{results/}} and figures in \texttt{{figures/}}. The ICLR template fetch status was \texttt{{{template_note}}}; source details are written to \texttt{{paper/template\_source.md}}.
+The repository contains the full sweep, experiment, and build scripts. The literature matrix is in \texttt{{docs/related\_work\_matrix.csv}}. Experiment outputs are in \texttt{{results/}} and figures in \texttt{{figures/}}. The v2 stress table is generated from \texttt{{results/signature\_budget\_stress.csv}}. The ICLR template fetch status was \texttt{{{template_note}}}; source details are written to \texttt{{paper/template\_source.md}}.
 
 \bibliography{{references}}
 \bibliographystyle{{iclr2026_conference}}
@@ -433,8 +470,9 @@ def main() -> int:
         ensure_dirs()
         status = fetch_iclr_template()
         summary_rows = load_summary()
+        stress_rows = load_signature_stress()
         write_references()
-        write_main_tex(summary_rows, status)
+        write_main_tex(summary_rows, status, stress_rows)
         (DATA / "paper_status.json").write_text(
             json.dumps({"status": "complete", "paper": str(PAPER / "main.tex")}, indent=2),
             encoding="utf-8",

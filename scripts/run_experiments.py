@@ -19,7 +19,9 @@ from src.contact_compression import (  # noqa: E402
     ContactMode,
     action_grid,
     bits_for_groups,
+    build_groups,
     choose_group_action,
+    cone_signature_key,
     feasible,
     feasible_mask,
     make_modes,
@@ -258,7 +260,7 @@ def plot_contact_cones(modes: Sequence[ContactMode], actions: Sequence[float], t
     plt.close(fig)
 
 
-def write_report(summary_rows: List[Dict[str, object]]) -> None:
+def write_report(summary_rows: List[Dict[str, object]], stress_rows: List[Dict[str, object]]) -> None:
     lines = [
         "# Experiment Report",
         "",
@@ -279,20 +281,112 @@ def write_report(summary_rows: List[Dict[str, object]]) -> None:
         )
     lines += [
         "",
+        "## V2 Signature-Budget Stress",
+        "",
+        "The submission-hardening stress test reruns the CCSC repair with fewer probe tasks and coarser action sectors. It shows that CCSC is conditional on a sufficiently rich action/task signature, not a free compression guarantee.",
+        "",
+        "| Signature budget | Probe tasks | Action sectors | Groups | Bits | Success | Empty-intersection rate | Mean regret |",
+        "|---|---:|---:|---:|---:|---:|---:|---:|",
+    ]
+    for row in stress_rows:
+        lines.append(
+            f"| {row['budget']} | {row['probe_tasks']} | {row['action_sectors']} | {row['groups']} | {row['bits']} | "
+            f"{float(row['success_rate']):.3f} | {float(row['empty_intersection_rate']):.3f} | {float(row['mean_regret']):.3f} |"
+        )
+    lines += [
+        "",
         "## Interpretation",
-        "Contact-count compression merges all local modes and frequently leaves no action that is feasible for every possible true contact. Coarser normal bins reduce but do not remove the problem. The cone-signature repair splits modes only when their feasible-action signatures differ, which recovers most raw-mode success without using exact mode identity.",
+        "Contact-count compression merges all local modes and frequently leaves no action that is feasible for every possible true contact. Coarser normal bins reduce but do not remove the problem. The cone-signature repair splits modes only when their feasible-action signatures differ, which recovers most raw-mode success without using exact mode identity. The v2 stress test also exposes the repair's own boundary: a low-budget signature under-separates control cones and leaves many empty aliases.",
         "",
         "## Generated Artifacts",
         "- `results/summary.json`",
         "- `results/summary.csv`",
         "- `results/episode_results.csv`",
         "- `results/policy_results.csv`",
+        "- `results/signature_budget_stress.csv`",
+        "- `results/signature_budget_stress_table.tex`",
         "- `figures/success_vs_bits.pdf`",
         "- `figures/empty_intersection_rate.pdf`",
         "- `figures/aliasing_heatmap.pdf`",
         "- `figures/contact_cones_alias.pdf`",
     ]
     (DOCS / "experiment_report.md").write_text("\n".join(lines) + "\n", encoding="utf-8")
+
+
+def run_signature_budget_stress(
+    modes: Sequence[ContactMode],
+    actions: Sequence[float],
+    tasks: Sequence[float],
+    summary_rows: List[Dict[str, object]],
+) -> List[Dict[str, object]]:
+    budgets = [
+        ("one_task_two_sectors", 24, 2),
+        ("one_task_four_sectors", 24, 4),
+        ("two_tasks_two_sectors", 12, 2),
+        ("two_tasks_four_sectors", 12, 4),
+    ]
+    rows: List[Dict[str, object]] = []
+    for label, task_stride, action_sectors in budgets:
+        probe_tasks = list(tasks[::task_stride])
+        groups = build_groups(
+            modes,
+            lambda mode, probe_tasks=probe_tasks, action_sectors=action_sectors: cone_signature_key(
+                mode,
+                probe_tasks,
+                actions,
+                action_sectors=action_sectors,
+            ),
+        )
+        result = evaluate_representation(label, groups, modes, actions, tasks)
+        rows.append(
+            {
+                "budget": label,
+                "probe_tasks": len(probe_tasks),
+                "action_sectors": action_sectors,
+                "groups": result["groups"],
+                "bits": result["bits"],
+                "success_rate": result["success_rate"],
+                "empty_intersection_rate": result["empty_intersection_rate"],
+                "destroyed_episode_rate": result["destroyed_episode_rate"],
+                "mean_regret": result["mean_regret"],
+            }
+        )
+    repair = next((row for row in summary_rows if row["representation"] == "cone_signature_repair"), None)
+    if repair is not None:
+        rows.append(
+            {
+                "budget": "v1_six_tasks_eight_sectors",
+                "probe_tasks": 6,
+                "action_sectors": 8,
+                "groups": repair["groups"],
+                "bits": repair["bits"],
+                "success_rate": repair["success_rate"],
+                "empty_intersection_rate": repair["empty_intersection_rate"],
+                "destroyed_episode_rate": repair["destroyed_episode_rate"],
+                "mean_regret": repair["mean_regret"],
+            }
+        )
+    write_csv(RESULTS / "signature_budget_stress.csv", rows)
+    lines = [
+        "\\begin{tabular}{lrrrrr}",
+        "\\toprule",
+        "Signature budget & Groups & Bits & Success & Empty alias & Regret \\\\",
+        "\\midrule",
+    ]
+    for row in rows:
+        label = str(row["budget"]).replace("_", " ")
+        lines.append(
+            f"{tex_label(label)} & {int(row['groups'])} & {int(row['bits'])} & "
+            f"{float(row['success_rate']):.3f} & {float(row['empty_intersection_rate']):.3f} & "
+            f"{float(row['mean_regret']):.3f} \\\\"
+        )
+    lines.extend(["\\bottomrule", "\\end{tabular}", ""])
+    (RESULTS / "signature_budget_stress_table.tex").write_text("\n".join(lines), encoding="utf-8")
+    return rows
+
+
+def tex_label(label: str) -> str:
+    return label.replace("&", r"\&").replace("_", r"\_")
 
 
 def main() -> int:
@@ -331,12 +425,14 @@ def main() -> int:
         plot_empty_intersections(summaries)
         plot_aliasing_heatmap(all_policies, tasks)
         plot_contact_cones(modes, actions, tasks)
-        write_report(summaries)
+        stress_rows = run_signature_budget_stress(modes, actions, tasks, summaries)
+        write_report(summaries, stress_rows)
         status_path.write_text(
             json.dumps(
                 {
                     "status": "complete",
                     "summary_rows": len(summaries),
+                    "signature_budget_stress_rows": len(stress_rows),
                     "episode_rows": len(all_episodes),
                     "policy_rows": len(all_policies),
                     "figures": sorted(p.name for p in FIGURES.glob("*")),

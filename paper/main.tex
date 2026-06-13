@@ -19,8 +19,11 @@ Paper under double-blind review}
 \begin{document}
 \maketitle
 
+\paragraph{Submission-hardening version: v2.}
+This revision adds a signature-budget stress test for the CCSC repair. With only one probe task and two action sectors, CCSC success falls to 0.931 and the empty-alias rate rises to 0.260; the six-probe/eight-sector setting has empty-alias rate 0.007. The supported claim is therefore conditional on a sufficiently rich action/task probe signature.
+
 \begin{abstract}
-Robots often compress contact state before planning or feedback control: a world model may keep only ``in contact'', a tactile encoder may keep a semantic label, or a planner may bin many contact geometries into one mode. This paper studies when that compression is not merely lossy but control-destroying. We show that if a compressed contact state aliases modes whose task-feasible action sets have empty intersection, no deterministic controller that observes only the compressed state can guarantee the local task for all aliased modes. The result suggests a repair: compress contact by control-cone signatures, splitting only those aliases that change the feasible action cone. A runnable friction-cone experiment shows the mechanism directly. Contact-count compression succeeds on 72.0% of raw-controllable local tasks and has an empty-intersection rate of 100.0%; the proposed cone-signature repair uses 6 bits over 52 groups and recovers 99.9% success, close to raw mode identity at 100.0%. The contribution is a small but sharp representational test for contact-rich robot world models: prediction-faithful compression is not enough when contact changes which actions are possible.
+Robots often compress contact state before planning or feedback control: a world model may keep only ``in contact'', a tactile encoder may keep a semantic label, or a planner may bin many contact geometries into one mode. This paper studies when that compression is not merely lossy but control-destroying. We show that if a compressed contact state aliases modes whose task-feasible action sets have empty intersection, no deterministic controller that observes only the compressed state can guarantee the local task for all aliased modes. The result suggests a repair: compress contact by control-cone signatures, splitting only those aliases that change the feasible action cone. A runnable friction-cone experiment shows the mechanism directly. Contact-count compression succeeds on 72.0% of raw-controllable local tasks and has an empty-intersection rate of 100.0%; the proposed cone-signature repair uses 6 bits over 52 groups and recovers 99.9% success, close to raw mode identity at 100.0%. A v2 stress test shows that underspecified signatures fail: one probe task with two action sectors leaves empty aliases at 26.0%. The contribution is a small but sharp representational test for contact-rich robot world models: prediction-faithful compression is not enough when contact changes which actions are possible.
 \end{abstract}
 
 \section{Introduction}
@@ -117,11 +120,21 @@ raw mode & 64 & 6 & 1.000 & 0.000 \\
 
 The experiment supports the theorem's mechanism. The coarse representations do not fail because the local dynamics are hard to optimize; the policy is given the best group action by exhaustive search over action directions. They fail because the alias class itself has no common feasible action. CCSC improves success by splitting aliases along the same object that appears in the proof: feasible action signatures.
 
+\paragraph{V2 signature-budget stress.}
+The main CCSC result uses six probe task directions and eight action sectors. To test whether the repair is robust to an underspecified signature, we rerun CCSC with coarser probe budgets. Table~\ref{tab:budget-stress} shows that one probe task and two action sectors leave substantial aliasing: success falls to 0.931, empty-alias rate rises to 0.260, and mean regret rises. CCSC therefore needs enough task/action probes to separate the control cones; it is not a free compression theorem.
+
+\begin{table}[t]
+\centering
+\caption{V2 signature-budget stress. Coarse probe signatures can under-separate control cones even though they use fewer bits.}
+\label{tab:budget-stress}
+\input{../results/signature_budget_stress_table.tex}
+\end{table}
+
 \section{Limitations}
-The evidence is local and model-based. It does not prove that a particular robot foundation model currently destroys contact controllability, nor does it validate CCSC on hardware. The theorem is one-step and deterministic; if the robot can safely probe, maintain a belief, or delay the task, some aliases may become recoverable. The repair also needs a source of action-feasibility labels. These limitations are acceptable for the paper's central claim: before adding more planning machinery, a contact representation should be tested for control-faithful alias classes.
+The evidence is local and model-based. It does not prove that a particular robot foundation model currently destroys contact controllability, nor does it validate CCSC on hardware. The theorem is one-step and deterministic; if the robot can safely probe, maintain a belief, or delay the task, some aliases may become recoverable. The repair also needs a source of action-feasibility labels and a sufficiently rich task/action probe signature. These limitations are acceptable for the paper's central claim: before adding more planning machinery, a contact representation should be tested for control-faithful alias classes.
 
 \section{Reproducibility Statement}
-The repository contains the full sweep, experiment, and build scripts. The literature matrix is in \texttt{docs/related\_work\_matrix.csv}. Experiment outputs are in \texttt{results/} and figures in \texttt{figures/}. The ICLR template fetch status was \texttt{official\_template\_ready}; source details are written to \texttt{paper/template\_source.md}.
+The repository contains the full sweep, experiment, and build scripts. The literature matrix is in \texttt{docs/related\_work\_matrix.csv}. Experiment outputs are in \texttt{results/} and figures in \texttt{figures/}. The v2 stress table is generated from \texttt{results/signature\_budget\_stress.csv}. The ICLR template fetch status was \texttt{official\_template\_ready}; source details are written to \texttt{paper/template\_source.md}.
 
 \bibliography{references}
 \bibliographystyle{iclr2026_conference}

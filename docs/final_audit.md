@@ -14,24 +14,20 @@
 
 7. Proof/formal-claim status: The empty-intersection obstruction is formally proved as a one-step/local theorem. The broader claim that real learned robot world models suffer this failure is not proved.
 
-8. Strongest evidence: Runnable friction-cone experiment. Contact-count success=0.720, cone-signature repair success=0.999, raw-mode success=1.000; figures and CSVs are in `figures/` and `results/`.
+8. Strongest evidence: Runnable friction-cone experiment. Contact-count success=0.720, cone-signature repair success=0.999, raw-mode success=1.000. V2 signature-budget stress: one probe task/two action sectors gives success=0.931, empty-alias=0.260, mean regret=0.167; the six-probe/eight-sector CCSC setting has empty-alias=0.007. Figures and CSVs are in `figures/` and `results/`.
 
 9. Biggest weaknesses: Local toy contact model, no hardware validation, deterministic one-step theorem, repair assumes access to action-feasibility labels or a contact model, and signatures depend on task/action discretization.
 
-10. Paper-readiness judgment: workshop. The mechanism is sharp and runnable, but an ICLR main-track submission would need stronger real-robot or high-fidelity simulation evidence.
+10. Paper-readiness judgment: workshop-only / strong-revise. The mechanism is sharp and runnable, but an ICLR main-track submission would need stronger real-robot or high-fidelity simulation evidence.
 
-11. Exact Downloads PDF path: `C:/Users/wangz/Downloads/27.pdf`. Build status: `complete`; copied flag: `True`.
+11. Exact Downloads PDF path: `C:/Users/wangz/Downloads/27.pdf` (exists, size=221342 bytes). Build status: `complete`; copied flag: `True`.
 
 12. GitHub URL: `https://github.com/Jason-Wang313/27_contact_state_compression_limits`. Publish status: `complete`.
 
-13. Visible Desktop PDF copy: pending orchestrator copy.
+13. Visible Desktop PDF copy: absent at checked Desktop paths (expected; canonical PDF is Downloads only).
+
+14. Local repo PDF copy: absent (expected after Downloads copy).
 
 Additional audit notes:
 - ICLR template status: `official_template_ready`.
 - Git publish details: Repository pushed.
-
-## Orchestrator Desktop Copy
-
-Checked: 2026-06-11 21:21:50 +01:00
-Downloads PDF: C:/Users/wangz/Downloads/27.pdf
-Result: copy script exit 0 log C:\Users\wangz\robotics_60_paper_batch\logs\desktop_copy_27_20260611_212146.log
