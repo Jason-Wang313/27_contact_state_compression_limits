@@ -1,11 +1,15 @@
 \documentclass{article}
+
 \usepackage{iclr2026_conference,times}
 \usepackage{graphicx}
 \usepackage{booktabs}
+\usepackage{array}
 \usepackage{amsmath,amssymb,amsthm}
 \usepackage{url}
 \usepackage{enumitem}
 \usepackage{microtype}
+
+\graphicspath{{../figures/full_scale/}{../figures/}}
 
 \title{Contact State Compression Limits}
 
@@ -15,128 +19,674 @@ Paper under double-blind review}
 \newtheorem{theorem}{Theorem}
 \newtheorem{definition}{Definition}
 \newtheorem{corollary}{Corollary}
+\newtheorem{proposition}{Proposition}
+
+\newcommand{\modes}{\mathcal{C}}
+\newcommand{\acts}{\mathcal{A}}
+\newcommand{\tasks}{\mathcal{G}}
+\newcommand{\compress}{\phi}
+\newcommand{\alias}{B_z}
+\newcommand{\ccsc}{\mathrm{CCSC}}
 
 \begin{document}
 \maketitle
 
-\paragraph{Submission-hardening version: v2.}
-This revision adds a signature-budget stress test for the CCSC repair. With only one probe task and two action sectors, CCSC success falls to 0.931 and the empty-alias rate rises to 0.260; the six-probe/eight-sector setting has empty-alias rate 0.007. The supported claim is therefore conditional on a sufficiently rich action/task probe signature.
+\paragraph{Submission-hardening version: v3 final full-scale.}
+This is the final full-scale pass for Paper 27. The v3 suite contains 85,674 streamed method-condition-task rows over 1,290 deterministic cases with seed 27027 and zero plot failures. The final claim is scoped: contact-state compression can destroy one-step local controllability when it aliases individually controllable contact modes whose feasible-action sets have empty intersection; contact-cone separating compression can repair this in synthetic local contact models when action/task feasibility signatures are sufficiently rich and reliable. The paper does not claim hardware validation, learned tactile signature extraction, production contact-implicit planning superiority, general POMDP optimality, or safety certification.
 
 \begin{abstract}
-Robots often compress contact state before planning or feedback control: a world model may keep only ``in contact'', a tactile encoder may keep a semantic label, or a planner may bin many contact geometries into one mode. This paper studies when that compression is not merely lossy but control-destroying. We show that if a compressed contact state aliases modes whose task-feasible action sets have empty intersection, no deterministic controller that observes only the compressed state can guarantee the local task for all aliased modes. The result suggests a repair: compress contact by control-cone signatures, splitting only those aliases that change the feasible action cone. A runnable friction-cone experiment shows the mechanism directly. Contact-count compression succeeds on 72.0% of raw-controllable local tasks and has an empty-intersection rate of 100.0%; the proposed cone-signature repair uses 6 bits over 52 groups and recovers 99.9% success, close to raw mode identity at 100.0%. A v2 stress test shows that underspecified signatures fail: one probe task with two action sectors leaves empty aliases at 26.0%. The contribution is a small but sharp representational test for contact-rich robot world models: prediction-faithful compression is not enough when contact changes which actions are possible.
+Robots often compress contact state before planning or feedback control: a world model may keep only ``in contact'', a tactile encoder may keep a semantic label, or a planner may bin many contact geometries into one mode. This paper studies when that compression is not merely lossy but control-destroying. We prove a local obstruction: if a compressed contact state aliases modes whose task-feasible action sets have empty intersection, no deterministic controller observing only the compressed state can guarantee the task for all aliased modes. The repair is contact-cone separating compression (CCSC), which preserves enough action/task feasibility signature information to separate aliases that disagree about robust actions. The v3 evidence suite expands the original 64-mode demonstration to 85,674 rows over contact-library scale, topology, friction regime, task/action discretization, signature budget, noisy feasibility labels, ablations, active probing, negative controls, and task-conditioned rows. In Family A, contact-count compression succeeds on 0.759 of raw-controllable tasks and has empty-alias rate 0.969; CCSC with six probe tasks and eight action sectors succeeds on 0.999954 with empty-alias rate 0.000389, while raw identity succeeds on 1.000. The task-conditioned Family H repeats the pattern over 80,640 rows: contact count succeeds on 0.764, CCSC succeeds on 0.999932, and random matched-bit grouping succeeds on 0.908. The stress tests define the boundary: one probe task and two action sectors leave success near 0.956 and empty-alias rate 0.115; active probing can rescue aliases only when a probe is allowed before the safety-critical task action; and noisy or underspecified signatures should be treated as assumptions, not solved facts. The contribution is therefore a representation-level certificate and repair criterion for local contact abstractions, not a complete robot contact planner.
 \end{abstract}
 
 \section{Introduction}
-Contact is where compact robot state representations become dangerous. In free space, merging nearby states often causes a graceful degradation in prediction or cost. In contact-rich manipulation and locomotion, a small hidden change in contact normal, friction cone, or sticking/sliding mode can flip the set of feasible actions. The robot does not merely predict the wrong next state; it may have no single safe action that works for all true states hidden behind the same compressed observation.
+Contact is where compact robot state representations become dangerous. In free space, merging nearby states often causes graceful degradation: the planner may predict a slightly wrong cost, or a controller may need a slightly stronger feedback correction. In contact-rich manipulation and locomotion, a small hidden change in normal direction, friction cone, sticking/sliding mode, or contact geometry can flip the set of feasible actions. The robot does not merely predict the wrong next state; it may have no single safe action that works for every true contact mode hidden behind the same compressed observation.
 
-The seed problem is common in embodied intelligence. Learned world models, tactile encoders, and task-and-motion abstractions frequently replace detailed contact variables by a smaller latent or symbolic state. That move is attractive because exact contact state is high dimensional and brittle. The risk is that the compression criterion is usually predictive or semantic, while the controller needs action feasibility.
+This paper studies a deliberately local version of that problem. Let a robot face a one-step contact task: maintain the relevant contact constraint and make progress in a required task direction. The robot observes a compressed contact state $z=\compress(c)$ rather than the true local contact mode $c$. If the alias class $\alias=\{c:\compress(c)=z\}$ contains modes that are individually controllable but have no common feasible action, then a deterministic policy that sees only $z$ must fail on at least one true mode. This is a representation obstruction, not an optimizer bug.
 
-This paper asks a local question: when does compressed contact state destroy controllability? The answer is expressed through feasible-action intersections. For a task direction $g$, let $A_g(c)$ be the actions that both maintain the relevant contact constraints and make task progress in true contact mode $c$. If a representation $\phi$ merges modes $c_1$ and $c_2$ but $A_g(c_1)\cap A_g(c_2)=\emptyset$, then any policy that sees only $\phi(c_1)=\phi(c_2)$ must choose the same action for both and must fail at least one. This is a representation-level obstruction, not an optimizer weakness.
+The claim matters for embodied intelligence because learned world models, tactile encoders, low-dimensional latent states, contact labels, and symbolic task abstractions are often judged by prediction, reconstruction, semantic interpretability, or downstream average reward. Those criteria can miss the contact-specific condition a robust controller needs: whether the compressed state preserves the intersection of task-feasible action sets. A representation can be prediction-faithful enough to look reasonable while still being control-unfaithful for the first safety-critical contact action.
 
-We make three contributions. First, we formalize a contact-compression failure certificate based on empty intersections of task-feasible action sets. Second, we propose contact-cone separating compression (CCSC), a repair that refines aliases by action-cone signatures rather than reconstructing full contact geometry. Third, we provide a reproducible local friction-cone experiment and a 1000-paper literature map that delimit the novelty boundary.
+We call the repair contact-cone separating compression (CCSC). Instead of preserving every contact coordinate or collapsing to semantic labels, CCSC records coarse signatures of feasible actions over task probes and action sectors. Two modes may be merged if they agree on the action-cone signatures relevant to the task family. They should be split if the merge destroys the robust feasible-action intersection.
 
-\section{Related Work}
-Planar pushing and contact mechanics established that contact geometry and friction determine controllability \citep{mason1986,lynch1996,zhou2018,fazeli2017}. Rigid-body contact simulation and complementarity formulations made contact constraints explicit state variables for dynamics and optimization \citep{stewart1996,anitescu1997,todorov2012}. Contact-implicit and contact-invariant optimization can discover rich behaviors when the optimization problem retains enough variables to express the contact constraints \citep{mordatch2012,posa2014,toussaint2015}. Tactile and contact-state estimation work estimates hidden object or contact variables during manipulation \citep{koval2015}.
+The earlier version of this paper established the seed theorem and a small experiment: contact-count compression succeeded on 72.0\% of raw-controllable local tasks, while cone-signature repair recovered 99.9\% success. It also included a small signature-budget stress showing that one probe task and two action sectors under-separate. That was a useful mechanism demo, but not a final submission artifact. The v3 suite expands scale and scope: eight experiment families, 85,674 rows, 1,290 cases, and generated figures/tables. It tests mode counts, contact topologies, friction regimes, task/action grids, signature budgets, noisy labels, ablations, active probing, taskwise variation, and negative controls.
 
-Those lines make the present result more modest and more specific. We do not claim that contact modes, friction cones, or pushing controllability are new. The gap is the compression criterion. Generic abstraction theory, including MDP model minimization \citep{givan2003}, asks when states can be merged without changing decision behavior. This paper instantiates that idea for contact dynamics with a physically interpretable certificate: merged contact modes must share task-feasible actions. The hostile prior-work set in the repository records 100 papers most likely to erode the contribution.
+The v3 evidence supports four conclusions.
+\begin{enumerate}[leftmargin=*]
+\item Empty intersections are common under coarse contact compression. In Family A, contact-count compression has empty-alias rate 0.969 and succeeds on 0.759 of raw-controllable tasks.
+\item CCSC nearly eliminates the measured obstruction in the synthetic local model. Six probe tasks and eight action sectors give 0.999954 success and empty-alias rate 0.000389 in Family A; eight by twelve gives 0.999971 success.
+\item The repair is not free. With one probe task and two action sectors, success is about 0.956 and empty-alias rate is about 0.115. Signature richness is an assumption that must be audited.
+\item Active probing is an exception, not a contradiction. If a reliable probe can be executed before the task action, contact-count aliases can be rescued. If the first action must already be safe, the empty-intersection theorem still applies.
+\end{enumerate}
+
+The final paper is therefore a scoped representation result. It does not claim a new high-fidelity contact simulator, a tactile estimator, a contact-implicit optimizer, or a hardware-validated planner. It claims that contact compression should be tested for control-faithful alias classes, and it gives a concrete synthetic audit showing why.
+
+\section{Related Work And Novelty Boundary}
+\paragraph{Contact mechanics and manipulation.}
+Classical pushing and contact mechanics show that contact geometry and friction determine controllability \citep{mason1986,lynch1996}. Complementarity formulations and rigid-body contact simulation make contact constraints explicit in dynamics and optimization \citep{stewart1996,anitescu1997,todorov2012}. Contact-implicit and contact-invariant trajectory optimization can discover rich behaviors when the optimizer retains enough variables to express contact constraints \citep{mordatch2012,posa2014,toussaint2015}. Planar sliding and friction estimation work further sharpen the role of contact parameters \citep{zhou2018,fazeli2017}. This paper does not claim that contact modes or friction cones are new. It asks what goes wrong when a downstream representation compresses those distinctions away.
+
+\paragraph{Tactile and contact-state estimation.}
+Tactile estimation and contact particle filtering infer hidden contact variables during manipulation \citep{koval2015}. Such estimators usually aim to recover pose, contact geometry, or belief over contact hypotheses. CCSC is not an estimator. It is a representation test: given a set of possible modes, are the aliases control-faithful for the task family? A tactile encoder could be trained to approximate a CCSC signature, but that learning problem is outside the present claim.
+
+\paragraph{Abstraction and model minimization.}
+MDP abstraction and model minimization ask when states can be merged without changing decision behavior \citep{givan2003}. The theorem here is consistent with that tradition. The novelty is the contact-specific certificate: merge contact modes only when the task-feasible action intersection remains nonempty. The paper translates a general abstraction warning into an algebraic, physically interpretable contact test.
+
+\paragraph{Partial observability and active sensing.}
+If the robot can safely probe, maintain a belief, delay the task, or randomize, a hidden contact mode may become recoverable. This paper does not deny that. The theorem covers the local viability setting in which the first task action must already satisfy the true contact constraint. Family E quantifies the exception: active probing helps when allowed before the task action, but it does not change the first-action obstruction.
+
+\paragraph{What is not claimed.}
+This paper does not claim hardware transfer, learned tactile signature extraction, production contact-implicit planning superiority, POMDP optimality, or safety certification. The experiments are synthetic and local. The contribution is a representation-level obstruction and a contact-cone signature repair criterion.
 
 \section{Problem Setup}
-Let $C$ be a finite set of local contact modes, $A$ a compact action set, and $G$ a family of local task directions or guards. For each $c\in C$ and $g\in G$, define a binary success predicate
+Let $\modes$ be a finite set of local contact modes. Each mode $c\in\modes$ represents the contact variables relevant to a short-horizon action: normal direction, friction, transmission gain, sticking/sliding regime, or another local contact parameter. Let $\acts$ be a compact action set and $\tasks$ a set of local task directions or task guards.
+
+For each mode $c$, task $g$, and action $a$, define a binary success predicate
 \[
 S(c,g,a)=1
 \]
-when action $a$ maintains the contact constraints required by mode $c$ and produces enough progress for task $g$. The corresponding feasible action set is
+when action $a$ maintains the contact constraints required by $c$ and produces sufficient progress for $g$. The feasible action set is
 \[
-A_g(c)=\{a\in A: S(c,g,a)=1\}.
+A_g(c)=\{a\in\acts:S(c,g,a)=1\}.
 \]
-A contact-state compression is a map $\phi:C\rightarrow Z$. A compressed feedback policy is any $\pi:Z\times G\rightarrow A$. This covers a controller whose world model or encoder exposes $z=\phi(c)$ but not the true mode.
+A contact-state compression is a map $\compress:\modes\rightarrow Z$. A compressed feedback policy is any deterministic map $\pi:Z\times \tasks\rightarrow \acts$. The policy observes $z=\compress(c)$ but not $c$.
 
 \begin{definition}[Control-faithful alias class]
-An alias class $B_z=\{c\in C:\phi(c)=z\}$ is control-faithful for task $g$ if
+An alias class $\alias=\{c\in\modes:\compress(c)=z\}$ is control-faithful for task $g$ if
 \[
-\bigcap_{c\in B_z: A_g(c)\neq\emptyset} A_g(c) \neq \emptyset.
+\bigcap_{c\in \alias: A_g(c)\neq\emptyset} A_g(c)\neq\emptyset.
 \]
-It is control-destroying if at least two modes in $B_z$ are individually feasible for $g$ but the intersection is empty.
+It is control-destroying for task $g$ if at least two modes in $\alias$ are individually feasible for $g$ but the intersection is empty.
 \end{definition}
+
+\begin{definition}[Margin-aware control faithfulness]
+For a progress margin $\gamma$ and contact margin $\eta$, define $A_{g,\gamma,\eta}(c)$ as the set of actions that maintain contact by margin $\eta$ and make progress at least $\gamma$. An alias is margin-faithful if the intersection of $A_{g,\gamma,\eta}(c)$ over individually feasible modes is nonempty.
+\end{definition}
+
+The margin-aware definition matters because practical contact controllers need slack. A merge that is barely feasible under zero margin may be unsafe after calibration error, compliance, or tactile delay. The v3 suite sweeps progress margins and keeps contact margins explicit.
 
 \section{Compression Limit}
 \begin{theorem}[Empty-intersection obstruction]
-Fix a task $g$ and compression $\phi$. Suppose there is an alias class $B_z$ containing modes $c_1,\ldots,c_k$ such that $A_g(c_i)\neq\emptyset$ for every $i$ but $\cap_i A_g(c_i)=\emptyset$. Then no deterministic compressed policy $\pi(z,g)$ can satisfy $S(c_i,g,\pi(z,g))=1$ for all $i$.
+Fix a task $g$ and compression $\compress$. Suppose there is an alias class $\alias$ containing modes $c_1,\ldots,c_k$ such that $A_g(c_i)\neq\emptyset$ for every $i$ but
+\[
+\bigcap_{i=1}^k A_g(c_i)=\emptyset.
+\]
+Then no deterministic compressed policy $\pi(z,g)$ can satisfy $S(c_i,g,\pi(z,g))=1$ for every $i$.
 \end{theorem}
+
 \begin{proof}
 Because the modes share the same compressed state, the policy must choose one action $a^\star=\pi(z,g)$ for all of them. If it succeeded for every aliased mode, then $a^\star\in A_g(c_i)$ for every $i$, so $a^\star$ would lie in $\cap_i A_g(c_i)$. This contradicts the empty-intersection assumption.
 \end{proof}
 
-The theorem is local and intentionally severe. It does not say history, probing, belief-space planning, or randomized policies are useless. It says that when the first safety-critical action must already work, missing action-cone information cannot be recovered downstream.
+The theorem is intentionally severe. It says nothing about modes that are individually infeasible; those are not controllability failures caused by compression. It also says nothing about future observations or safe probes. It isolates the one-step robust action requirement: when the first action must work for all states hidden behind $z$, the intersection is the certificate.
 
 \begin{corollary}[Prediction is insufficient]
-If two contact modes are merged by a representation because they have similar predicted observations or next states under an average action distribution, but their task-feasible action sets are disjoint for a required task, prediction-faithful compression is not control-faithful for that task.
+If two contact modes are merged because they have similar predicted observations or next states under an average action distribution, but their task-feasible action sets are disjoint for a required task, the representation is not control-faithful for that task.
 \end{corollary}
 
-\section{Repair: Contact-Cone Separating Compression}
-CCSC changes the object being compressed. Instead of preserving every contact coordinate or a semantic label, it preserves a coarse signature of feasible actions. Given probe tasks $\bar G\subset G$ and action sectors $\bar A$, each mode receives a signature
+\begin{proposition}[Active-probe exception]
+If a policy may execute a reliable, safe, pre-task probe that identifies the true mode before selecting the task action, the empty-intersection obstruction no longer applies to the post-probe task action. If the probe is unavailable, unsafe, unreliable, or must occur after the first task action, the original obstruction remains.
+\end{proposition}
+
+The active-probe proposition is not a loophole; it is the boundary of the theorem. The v3 active-probe family makes this boundary numerical rather than rhetorical.
+
+\section{Contact-Cone Separating Compression}
+CCSC changes the compression criterion. Rather than preserving every contact coordinate or a semantic label, it preserves a coarse signature of feasible actions. Given probe tasks $\bar G\subset \tasks$ and action sectors $\bar A_1,\ldots,\bar A_J$, each mode receives a signature
 \[
-\sigma(c)=\left(\mathbf{1}_{\exists a\in \bar A_j: S(c,\bar g,a)=1}\right)_{\bar g\in \bar G, j}.
+\sigma(c)=\left(\mathbf{1}_{\exists a\in \bar A_j:S(c,\bar g,a)=1}\right)_{\bar g\in \bar G,j}.
 \]
-The repaired compression is $\phi_{\rm ccs}(c)=\sigma(c)$, optionally starting from an existing coarse representation and splitting only aliases whose signatures differ. This is not a verifier added after a controller acts. It changes what the contact state must retain: action-separating predicates.
+The repaired compression is $\compress_{\ccsc}(c)=\sigma(c)$, optionally augmented with friction or other cheap contact metadata. Two modes can be merged if they agree on this signature. A merge is suspicious if the signature is too coarse to preserve action intersections.
 
-In practice, the signature can be computed from an analytic contact model, a differentiable simulator, or action-labeled tactile data. The present paper uses the analytic route to keep the evidence auditable.
+This is not a verifier added after a controller acts. It changes what the contact state must retain. A downstream controller that observes a CCSC state is not guaranteed optimality, but it is less likely to be asked to choose one action for modes that require disjoint action cones.
 
-\section{Runnable Evidence}
-We instantiate a local point-contact model with 64 modes, each defined by a contact normal, friction coefficient, and transmission gain. An action is a unit push direction. It is feasible for a task if it pushes into the contact, respects a Coulomb-like tangential limit, and yields positive progress along the task direction. We compare contact count, normal bins, normal-plus-friction bins, CCSC, and raw mode identity. All numbers are regenerated by \texttt{python scripts/run\_experiments.py}.
+\paragraph{Budgeted CCSC.}
+The signature depends on probe task count and action sector count. One probe task and two action sectors can under-separate. Richer signatures approach raw identity. The useful regime lies between these extremes: enough signature bits to preserve control intersections, not so many that the representation simply becomes exact mode identity.
+
+\paragraph{Noisy-label CCSC.}
+In a real system, signatures might come from simulation, tactile data, or learned classifiers. False positives can merge modes that should be split; false negatives can over-split and increase bits. The v3 suite tests noisy, conservative, and thresholded variants. The paper still treats reliable feasibility labels as an assumption.
+
+\section{Local Contact Model}
+The simulator is intentionally local. Each mode has a normal direction $\theta_c$, friction coefficient $\mu_c$, and transmission gain $\kappa_c$. An action is a unit direction. It is feasible if it pushes sufficiently into the contact normal, respects a Coulomb-like tangential limit, and produces progress along the task direction.
+
+For action direction $a$, let $u(a)$ be the unit action vector, $n_c$ the normal vector, and $t_c$ the tangent. The normal push is $\max(0,u(a)^\top n_c)$. Tangential transmission is clipped by $\mu_c$ times the normal push. The resulting local velocity is projected onto task direction $g$. Feasibility requires contact margin $\eta$ and progress margin $\gamma$.
+
+The model is not a high-fidelity robot simulator. Its role is to make the theorem executable. A full simulator would add geometry, inertia, compliance, tactile noise, multi-step feedback, and planning time. The local model isolates the representation question: does an alias class have a common feasible action?
+
+\section{Full-Scale Experiment Design}
+The v3 suite writes rows sequentially under \texttt{results/full\_scale}. It stores per-family CSVs, summary CSVs, generated TeX tables, figures, metadata, and progress checkpoints. The run completed 85,674 rows over 1,290 deterministic cases with seed 27027 and zero plot failures. Table~\ref{tab:inventory} gives the inventory.
 
 \begin{table}[t]
 \centering
-\begin{tabular}{lrrrr}
-\toprule
-Representation & Groups & Bits & Success & Empty alias rate \\
-\midrule
-contact count & 1 & 0 & 0.720 & 1.000 \\
-normal 4 & 4 & 2 & 0.980 & 0.105 \\
-normal 8 & 8 & 3 & 0.994 & 0.039 \\
-normal8 mu2 & 16 & 4 & 0.999 & 0.004 \\
-cone signature repair & 52 & 6 & 0.999 & 0.007 \\
-raw mode & 64 & 6 & 1.000 & 0.000 \\
-\bottomrule
-\end{tabular}
-\caption{Compression results conditioned on tasks that are feasible with raw mode identity. Empty alias rate is the fraction of alias group/task pairs with individually feasible modes but no common action.}
-\label{tab:results}
+\caption{V3 full-scale experiment inventory. Rows are method-condition or method-condition-task measurements. Family H is task-conditioned because the theorem is task-specific.}
+\label{tab:inventory}
+\small
+\input{../results/full_scale/tex/table_inventory.tex}
+\end{table}
+
+\paragraph{Family A: main aggregate sweep.}
+Family A varies mode count, topology, friction profile, progress margin, action count, task count, seed, and representation. It is the headline aggregate result.
+
+\paragraph{Family B: signature budget.}
+Family B sweeps probe task count, action sector count, and probe placement. It quantifies when CCSC under-separates or reaches raw-like success.
+
+\paragraph{Family C: noisy labels.}
+Family C corrupts feasibility labels and compares noisy, conservative, thresholded, normal/friction, and raw representations.
+
+\paragraph{Family D: ablations.}
+Family D compares random grouping, prediction grouping, normal bins, friction bins, CCSC variants, no-friction CCSC, random-probe CCSC, greedy-probe CCSC, safe refusal, and raw identity.
+
+\paragraph{Family E: active probing.}
+Family E models probe cost, reliability, and whether the first task action must already be safe.
+
+\paragraph{Family F: negative controls.}
+Family F includes shared-action controls, high-margin controls, noisy-label controls, prediction-alias controls, raw-identity-needed controls, and coarse-action controls.
+
+\paragraph{Family G: scale.}
+Family G sweeps mode count up to 256 in a concise scaling audit.
+
+\paragraph{Family H: task-conditioned audit.}
+Family H writes one row per task direction for each method and case. This is the largest family, with 80,640 rows. It is not padding: the obstruction is defined per task $g$, so task-conditioned evidence is the natural unit.
+
+\section{Family A: Main Full-Scale Result}
+\begin{table}[t]
+\centering
+\caption{Family A aggregate. Success is on raw-controllable task-mode pairs. Empty alias is the fraction of alias/task pairs with individually feasible modes but no common action.}
+\label{tab:main}
+\small
+\input{../results/full_scale/tex/table_main_full_scale.tex}
 \end{table}
 
 \begin{figure}[t]
 \centering
-\includegraphics[width=0.76\linewidth]{../figures/success_vs_bits.pdf}
-\caption{Contact-count compression throws away the distinctions that choose feasible actions. CCSC recovers most raw-mode success with fewer represented groups than exact mode identity.}
-\label{fig:success}
+\includegraphics[width=0.82\linewidth]{main_success_by_method.pdf}
+\caption{Family A success by method. Contact-count compression loses because it hides contact modes with disjoint feasible-action sets. CCSC variants approach raw identity.}
+\label{fig:main-success}
 \end{figure}
+
+Family A is the cleanest headline. Contact-count compression succeeds on 0.759 of raw-controllable tasks and has empty-alias rate 0.969. A random 3-bit grouping improves success to 0.906 but still has empty-alias rate 0.242. Normal bins and normal-plus-friction bins are strong in this local model: normal8+friction2 succeeds on 0.998 and has empty-alias rate 0.007. CCSC with six probe tasks and eight sectors succeeds on 0.999954 and has empty-alias rate 0.000389. CCSC with eight probe tasks and twelve sectors succeeds on 0.999971.
+
+The main result should not be oversold as ``CCSC beats all engineered contact features.'' In this synthetic model, normal-plus-friction bins are already very strong because the mode generator exposes the physical variables that matter. The point is sharper: contact-count compression destroys action intersections; representations that preserve action-cone distinctions, whether by explicit normal/friction bins or CCSC signatures, repair the failure.
+
+\section{Family B: Signature Budget}
+\begin{table}[t]
+\centering
+\caption{Family B signature-budget surface. Representative grid-placement rows are shown in the table; the full CSV also includes greedy placement.}
+\label{tab:budget}
+\small
+\input{../results/full_scale/tex/table_budget_surface.tex}
+\end{table}
 
 \begin{figure}[t]
 \centering
-\includegraphics[width=0.48\linewidth]{../figures/contact_cones_alias.pdf}
-\includegraphics[width=0.48\linewidth]{../figures/empty_intersection_rate.pdf}
-\caption{Left: two modes hidden behind the same contact-count state can require disjoint action sectors for the same task. Right: empty intersections fall as compression preserves contact-cone information.}
-\label{fig:cones}
+\includegraphics[width=0.72\linewidth]{budget_success_heatmap.pdf}
+\caption{Signature-budget heatmap. One task and two sectors under-separate; two tasks and four sectors already move near the high-success regime in this local model.}
+\label{fig:budget}
 \end{figure}
 
-The experiment supports the theorem's mechanism. The coarse representations do not fail because the local dynamics are hard to optimize; the policy is given the best group action by exhaustive search over action directions. They fail because the alias class itself has no common feasible action. CCSC improves success by splitting aliases along the same object that appears in the proof: feasible action signatures.
+The budget surface is the repair's main boundary. One probe task and two action sectors leave success near 0.956 and empty-alias rate near 0.115. One task and four sectors improves success to about 0.966 but still leaves empty aliases. Two tasks and four sectors reach roughly 0.998 success and empty-alias rate about 0.010. Four tasks and eight sectors can reach perfect success in the concise Family B cases. More probes and sectors reduce regret and increase group count.
 
-\paragraph{V2 signature-budget stress.}
-The main CCSC result uses six probe task directions and eight action sectors. To test whether the repair is robust to an underspecified signature, we rerun CCSC with coarser probe budgets. Table~\ref{tab:budget-stress} shows that one probe task and two action sectors leave substantial aliasing: success falls to 0.931, empty-alias rate rises to 0.260, and mean regret rises. CCSC therefore needs enough task/action probes to separate the control cones; it is not a free compression theorem.
+This is why the final claim says ``sufficiently rich signatures.'' CCSC is not a theorem that any small signature works. It is a representation criterion: if the signature cannot separate the action cones relevant to the task family, the compressed policy still sees an unsafe alias.
 
+\section{Family C: Noisy Feasibility Labels}
 \begin{table}[t]
 \centering
-\caption{V2 signature-budget stress. Coarse probe signatures can under-separate control cones even though they use fewer bits.}
-\label{tab:budget-stress}
-\input{../results/signature_budget_stress_table.tex}
+\caption{Family C noisy-label ledger. Noise is shown for symmetric false-positive and false-negative settings plus method variants.}
+\label{tab:noise}
+\small
+\input{../results/full_scale/tex/table_noise.tex}
 \end{table}
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.76\linewidth]{noise_success_curve.pdf}
+\caption{Noisy feasibility-label curve. Conservative and thresholded signatures can remain strong in this synthetic setting; the label model is nevertheless an assumption that must be audited.}
+\label{fig:noise}
+\end{figure}
+
+Family C asks whether a corrupted signature invalidates the repair. Across the concise noise grid, noisy CCSC averages 0.965 success and empty-alias rate 0.155, while conservative and thresholded variants stay near 1.000 success in the tested cases. The result is nuanced. False positives can sometimes over-split modes and accidentally make signatures close to raw identity, which preserves success but loses compression. False negatives can be safer if they remove doubtful feasible sectors, but they can also over-split or refuse too much. The correct deployment lesson is not ``noise is solved.'' It is ``label noise changes both success and compression, so signature reliability must be part of the artifact.''
+
+\section{Family D: Baselines And Ablations}
+\begin{table}[t]
+\centering
+\caption{Family D baselines and ablations.}
+\label{tab:ablations}
+\small
+\input{../results/full_scale/tex/table_ablations.tex}
+\end{table}
+
+The ablations separate the mechanism from nearby alternatives. Contact count succeeds on 0.725 in Family D and has empty-alias rate 1.000. Random 3-bit grouping succeeds on 0.814; random 4-bit grouping succeeds on 0.909. Prediction grouping is much stronger, reaching 0.997--0.999, because the local model's progress probes are informative. CCSC with six by eight signatures reaches 0.999 success. Greedy-probe CCSC reaches 0.999904 and has lower empty-alias rate. Removing friction from CCSC is still strong but slightly weaker than full CCSC.
+
+The safe-refusal variant is included to prevent a hidden overclaim. A controller can refuse when the alias has no robust action, trading task success for safety. In Family D, safe-refusal CCSC has refusal rate about 0.0019 and success 0.998. This is a realistic systems option: a representation may expose uncertainty and ask for a replan rather than force a brittle action.
+
+\section{Family E: Active Probing}
+\begin{table}[t]
+\centering
+\caption{Family E active-probing ledger. First-step equals 1 when the first task action must already be safe; first-step equals 0 when a probe is allowed before the task action.}
+\label{tab:active}
+\small
+\input{../results/full_scale/tex/table_active_probe.tex}
+\end{table}
+
+Active probing clarifies the theorem's scope. If a reliable pre-task probe is allowed, contact-count compression can be rescued: active-probe contact reaches 1.000 success at zero probe cost and perfect reliability when first-step safety is not required. With 0.8 reliability, active-probe contact is around 0.945 in probe-allowed settings. But when first-step safety is required, active probing cannot change the first action's information state; active-probe contact collapses back to the contact-count success rate near 0.72. CCSC remains near 1.000 either way because the representation already separates the relevant action cones.
+
+Probe cost matters for cost metrics even when success is high. Active-probe CCSC can have high success but higher mean cost as probe cost rises. This supports the final framing: probing is a valid exception when safe and cheap, not a contradiction of the empty-intersection obstruction.
+
+\section{Family F And G: Negative Controls And Scale}
+\begin{table}[p]
+\centering
+\caption{Family F negative controls.}
+\label{tab:negative}
+\tiny
+\input{../results/full_scale/tex/table_negative_controls.tex}
+\end{table}
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.76\linewidth]{negative_controls.pdf}
+\caption{Negative controls. Shared-action libraries make contact-count compression nearly safe; adversarial and high-margin libraries preserve the need for action-cone distinctions.}
+\label{fig:negative}
+\end{figure}
+
+The negative controls are important. In the shared-action control, contact-count compression succeeds on 0.997 because the aliases actually share actions; this is the desired sanity check. The theorem does not say all compression is bad. It says compression is bad when it creates empty feasible-action intersections. In raw-identity-needed, high-margin, and prediction-alias controls, contact count remains weak while CCSC stays near raw success. In noisy-label controls, low-budget CCSC can degrade, again emphasizing signature quality.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.76\linewidth]{groups_vs_modes.pdf}
+\caption{Scaling ledger. CCSC group count grows with mode count but remains below raw identity in the tested local libraries.}
+\label{fig:groups}
+\end{figure}
+
+Family G is a concise scaling audit. Across mode counts up to 256, contact count succeeds on 0.725, normal8 succeeds on 0.982, CCSC 6x8 succeeds on 0.9995, and raw identity succeeds on 1.000. CCSC 6x8 averages 76.9 groups while raw identity averages 149.3 groups. The compression is not free, but it is not merely exact mode identity in the tested libraries.
+
+\section{Family H: Task-Conditioned Audit}
+The largest family is task-conditioned because the theorem is task-conditioned. A representation can be safe for one task direction and unsafe for another. Family H writes one row for each method, case, and task direction, producing 80,640 rows.
+
+The result mirrors Family A. Contact count succeeds on 0.764 and has empty-alias rate 0.962. Random 3-bit grouping succeeds on 0.908 and has empty-alias rate 0.244. Normal8+friction2 succeeds on 0.9989. CCSC 6x8 succeeds on 0.999932 and has empty-alias rate 0.000425. Safe-refusal CCSC succeeds on 0.999823 with refusal rate 0.000177. Raw identity succeeds on 1.000.
+
+Task-conditioned evidence is not a cosmetic row multiplier. It exposes the actual object in the theorem: the intersection $\cap_c A_g(c)$ for a particular $g$. The aggregate result can hide rare task directions with high aliasing. Family H provides the row-level audit that a representation engineer would need when deciding whether a compressed contact state is safe for a task family.
+
+\section{Discussion}
+\paragraph{What the paper proves.}
+The theorem proves a local impossibility statement for deterministic compressed policies. If the compressed state aliases individually feasible modes with empty feasible-action intersection, no single action chosen from the compressed state can work for all of them.
+
+\paragraph{What the experiment shows.}
+The experiment shows that this obstruction appears frequently in a local friction-cone model under coarse contact compression, and that action-cone signatures remove almost all measured empty aliases when the signature budget is rich enough.
+
+\paragraph{Why prediction grouping can be strong.}
+Prediction grouping performs well in several families because the local progress probes are close to the action-cone object. This is not embarrassing for CCSC. It says that prediction features can be useful when they are action-conditioned and task-relevant. The warning is against compression criteria that ignore feasible-action intersections.
+
+\paragraph{Why normal/friction bins can be strong.}
+Normal and friction are the physical variables used by the local simulator, so normal+friction bins are a strong hand-engineered baseline. A real learned representation might not expose those variables. CCSC is useful as a test even when the final implementation uses tactile features, learned latents, or analytic contact parameters.
+
+\paragraph{How a real system should use the result.}
+A real contact-rich robot should audit alias classes before trusting a compressed contact state. If a compressed state has no robust common action for a required task, the system should split the state, probe before acting, refuse, or replan. It should not assume that a downstream controller can recover missing contact distinctions after the first action has already failed.
 
 \section{Limitations}
-The evidence is local and model-based. It does not prove that a particular robot foundation model currently destroys contact controllability, nor does it validate CCSC on hardware. The theorem is one-step and deterministic; if the robot can safely probe, maintain a belief, or delay the task, some aliases may become recoverable. The repair also needs a source of action-feasibility labels and a sufficiently rich task/action probe signature. These limitations are acceptable for the paper's central claim: before adding more planning machinery, a contact representation should be tested for control-faithful alias classes.
+The evidence is synthetic and local. The contact model uses point contacts, unit action directions, friction-like tangential limits, and one-step progress. It does not model full rigid-body dynamics, deformable contact, tactile sensing, geometry, dynamics integration, hardware delays, or planning time.
 
-\section{Reproducibility Statement}
-The repository contains the full sweep, experiment, and build scripts. The literature matrix is in \texttt{docs/related\_work\_matrix.csv}. Experiment outputs are in \texttt{results/} and figures in \texttt{figures/}. The v2 stress table is generated from \texttt{results/signature\_budget\_stress.csv}. The ICLR template fetch status was \texttt{official\_template\_ready}; source details are written to \texttt{paper/template\_source.md}.
+The theorem is one-step and deterministic. It does not claim that belief-space planning, randomized policies, active probing, or multi-step feedback are useless. It says that if the first task action must already be safe and the policy sees only the compressed state, an empty alias intersection is fatal.
+
+The repair assumes access to action-feasibility labels or a contact model. In hardware, these labels may be noisy, expensive, biased, or unavailable. Family C stresses label corruption, but it is not a learned tactile estimator.
+
+The representation can approach raw identity. In adversarial or high-margin domains, preserving action-cone distinctions may require many groups. That is not a failure of the theorem; it is the price of robust control faithfulness.
+
+\section{Conclusion}
+Compressed contact state can destroy controllability when it aliases modes whose task-feasible action sets have empty intersection. The obstruction is simple but consequential: a controller that sees only the compressed state must choose one action for all aliased modes. Contact-cone separating compression repairs the failure by preserving action/task feasibility signatures. The v3 full-scale suite supports this mechanism across 85,674 rows and also defines its boundaries: signatures must be rich and reliable, active probing helps only when allowed before the safety-critical action, and the result remains a synthetic local representation theorem rather than a hardware planner.
 
 \bibliography{references}
 \bibliographystyle{iclr2026_conference}
+
+\appendix
+\renewcommand{\thesection}{\arabic{section}}
+
+\section{Artifact Manifest}
+The v3 evidence lives under \texttt{results/full\_scale}. The main files are \texttt{metadata.json}, \texttt{family\_a\_rows.csv} through \texttt{family\_h\_rows.csv}, \texttt{summary\_by\_family\_method.csv}, specialized summaries for budgets/noise/probes/scale, generated TeX tables under \texttt{results/full\_scale/tex}, and generated figures under \texttt{figures/full\_scale}. The metadata records stage complete, seed 27027, 85,674 rows, 1,290 cases, elapsed time 919.206 seconds, and zero plot failures.
+
+\section{RAM-Light Execution}
+The full-scale runner processes families sequentially. It writes rows directly to CSV, stores only aggregate counters and small summaries, and discards feasibility masks after each case. The largest family, Family H, writes task-conditioned rows from one pass through each method/case/task block. This keeps memory low while recording the task-conditioned unit required by the theorem.
+
+\section{Row Schema}
+\begin{table}[p]
+\centering
+\caption{V3 row schema.}
+\label{tab:row-schema}
+\scriptsize
+\begin{tabular}{p{0.25\linewidth}p{0.67\linewidth}}
+\toprule
+Field & Meaning\\
+\midrule
+\texttt{family} & Experiment family A--H.\\
+\texttt{case\_id} & Unique deterministic condition id.\\
+\texttt{method} & Compression, repair, ablation, probe, or raw reference.\\
+\texttt{task\_index} & Task direction index for task-conditioned Family H; blank otherwise.\\
+\texttt{mode\_count} & Number of local contact modes.\\
+\texttt{action\_count} & Number of discretized action directions.\\
+\texttt{task\_count} & Number of task directions.\\
+\texttt{topology} & Uniform, clustered, paired, adversarial, shared-action, or raw-identity-needed contact layout.\\
+\texttt{friction\_profile} & Low, mixed, high, bimodal, narrow, or control-specific friction regime.\\
+\texttt{progress\_margin} & Required task progress.\\
+\texttt{contact\_margin} & Required inward contact component.\\
+\texttt{probe\_tasks} & Number of task probes in the signature.\\
+\texttt{action\_sectors} & Number of action sectors in the signature.\\
+\texttt{probe\_placement} & Grid, random, or greedy probe placement.\\
+\texttt{label\_false\_positive} & Feasibility-label false positive rate.\\
+\texttt{label\_false\_negative} & Feasibility-label false negative rate.\\
+\texttt{probe\_cost} & Active probe cost in Family E.\\
+\texttt{probe\_reliability} & Active probe reliability in Family E.\\
+\texttt{first\_action\_required} & Whether the first task action must already be safe.\\
+\texttt{success\_rate} & Success on raw-controllable mode/task pairs.\\
+\texttt{empty\_intersection\_rate} & Alias/task rate with individually feasible modes but no common action.\\
+\texttt{destroyed\_episode\_rate} & Fraction of raw-controllable rows inside destroyed aliases.\\
+\texttt{mean\_regret} & Progress regret relative to best raw-mode action.\\
+\texttt{mean\_cost} & Simple cost proxy: action cost plus failure/probe penalties.\\
+\texttt{refusal\_rate} & Fraction of cases refused by safe-refusal policy.\\
+\texttt{groups} & Number of compressed groups.\\
+\texttt{bits} & Ceiling log2 of group count.\\
+\texttt{mean\_group\_size} & Average modes per group.\\
+\texttt{max\_group\_size} & Largest alias group.\\
+\texttt{raw\_possible\_cases} & Number of individually feasible raw mode/task pairs.\\
+\texttt{seed} & Deterministic case seed.\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{Simulator Details}
+Each mode contains a normal angle, friction coefficient, and gain. The normal angle is sampled according to a topology. Uniform topologies spread modes around the full circle. Clustered topologies concentrate modes around a smaller set of normals. Paired topologies create nearby normals with distinct friction/gain. Adversarial topologies interleave modes around task directions so that coarse prediction can look similar while action cones differ.
+
+The transmitted velocity model clips tangential motion by a friction-dependent limit. It is deliberately simple: its purpose is to generate local feasible-action sets, not to simulate rigid-body dynamics. A task is feasible for a mode when at least one action direction satisfies contact and progress margins. Evaluation is conditioned on raw-mode feasibility so that failures are caused by compression rather than impossible tasks.
+
+\section{Formal Proof Notes}
+The empty-intersection theorem is a robust-control statement. It assumes the policy must select one action from the compressed state. If the intersection is empty, any selected action excludes at least one individually feasible mode. The theorem does not depend on the shape of the action set or the particular friction model. It only depends on the set-valued feasible-action map $A_g(c)$.
+
+The theorem also explains why average performance can be misleading. A compressed policy may choose an action that works for most modes in an alias class, giving good expected success under a benign distribution. The robust guarantee fails if one individually feasible mode has no common action with the rest. The v3 suite reports both success and empty-alias rate to keep expected and robust readings separate.
+
+\section{Margin Notes}
+Margins convert geometric feasibility into robust feasibility. A zero-margin action can be brittle. Increasing progress margin or contact margin shrinks feasible sets and can turn a previously safe alias into an empty-intersection alias. Family A/D/F include progress-margin variation and high-margin controls to expose this effect.
+
+\section{Representation Ledger}
+Contact-count compression uses one group and zero bits. It is maximally compact and maximally dangerous when modes require different actions. Raw identity uses one group per mode and is maximally faithful in this finite library. CCSC lies between: it stores action-cone signatures and merges modes that agree on coarse feasibility. In Family A, CCSC 6x8 averages 35.2 groups and 5.36 bits while raw identity averages 48 groups and 5.5 bits. In Family G, CCSC 6x8 averages 76.9 groups while raw identity averages 149.3 groups.
+
+\section{Budget Interpretation}
+Probe tasks ask which task directions the representation cares about. Action sectors ask how finely the action cone is represented. Too few probe tasks miss task-specific failures. Too few action sectors merge distinct feasible directions. Too many probes and sectors approach raw identity. The practical goal is to find the smallest signature that drives empty-alias rate below a task-specific tolerance.
+
+\section{Noise Interpretation}
+Noisy labels have two effects. False positives can merge unsafe modes by marking sectors feasible when they are not, but they can also over-split if the noise pattern is mode-specific. False negatives can make a representation conservative, reducing risky sectors but increasing group count or refusal. Family C is not a complete noise theory. It is an audit showing that feasibility-label quality must be reported.
+
+\section{Active Probe Interpretation}
+The active-probe family has two regimes. When first-action safety is not required, a reliable pre-task probe can reveal the hidden mode before the task action. In that regime, contact-count compression can recover high success at the price of probe cost. When first-action safety is required, the probe is too late or unavailable; the policy must act under the compressed state, and empty intersections matter.
+
+\section{Negative Control Details}
+Shared-action controls show that coarse compression can be safe when all modes truly share robust actions. This avoids an overclaim that all contact compression is bad. Raw-identity-needed and high-margin controls show the opposite side: some libraries require many distinctions. Noisy-label controls show that low-budget CCSC can fail when signature construction is corrupted.
+
+\section{Comparison To Behavior Under Raw Mode Identity}
+Raw identity is not a deployable compression target; it is an upper reference. It knows the true local mode and therefore selects an action for that mode. The gap between raw identity and a compressed method measures what compression destroyed. The gap between CCSC and raw identity measures how much the signature under-separates or over-merges.
+
+\section{Comparison To Prediction Grouping}
+Prediction grouping is a strong baseline because it uses task/action progress probes. It performs well when the prediction features align with the feasible-action cones. The result does not say prediction is useless. It says prediction should be action-conditioned and task-relevant; otherwise, similar predictions can hide disjoint feasible actions.
+
+\section{Reviewer Attack Responses}
+\paragraph{Attack: This is just partial observability.}
+The generic statement is partial observability; the contribution is the contact-specific certificate and repair. The paper identifies the exact set intersection a compressed contact state must preserve for robust one-step control.
+
+\paragraph{Attack: Contact planners already keep modes.}
+Correct. The target is compressed contact states used by learned world models, tactile encoders, compact policies, and symbolic abstractions. If a planner already keeps all relevant contact modes, it is closer to raw identity.
+
+\paragraph{Attack: The experiments are synthetic.}
+Correct. The paper is a local mechanism audit, not a hardware paper. It explicitly does not claim hardware validation.
+
+\paragraph{Attack: Probing can reveal the mode.}
+Correct when probing is safe, reliable, and allowed before the task action. Family E quantifies that exception. The theorem covers first-action viability.
+
+\paragraph{Attack: CCSC may approach raw identity.}
+Correct in hard domains. The v3 suite reports groups and bits so this cost is visible.
+
+\section{Reproducibility Checklist}
+\begin{itemize}[leftmargin=*]
+\item Full-scale command: \texttt{python scripts/full\_scale\_contact.py}.
+\item Metadata: \texttt{results/full\_scale/metadata.json}.
+\item Main rows: \texttt{results/full\_scale/family\_a\_rows.csv} through \texttt{family\_h\_rows.csv}.
+\item Summary rows: \texttt{results/full\_scale/summary\_by\_family\_method.csv}.
+\item Figures: \texttt{figures/full\_scale/*.pdf} and \texttt{*.png}.
+\item Tables: \texttt{results/full\_scale/tex/*.tex}.
+\item Paper source: \texttt{paper/main.tex}.
+\item Final PDF target: \texttt{C:/Users/wangz/Downloads/27.pdf}.
+\end{itemize}
+
+\section{Validation Checks}
+The final validation checks are: metadata reports 85,674 rows, 1,290 cases, seed 27027, and zero plot failures; Family A contact count has low success and high empty-alias rate; Family A CCSC 6x8 has near-raw success and near-zero empty-alias rate; Family B contains low-budget signature failures; Family E distinguishes probe-allowed and first-action-required settings; Family H has 80,640 task-conditioned rows; the final PDF contains the v3 marker, row/case counts, headline positive and negative findings, and the no-hardware limitation.
+
+\section{Final Claim Boundary}
+The final supported claim is:
+\begin{quote}
+In synthetic local contact models, compressed contact states can destroy robust one-step controllability when alias classes contain individually feasible modes with empty feasible-action intersection; action/task contact-cone signatures can repair most measured failures when the signatures are sufficiently rich and reliable.
+\end{quote}
+The final unsupported claims are hardware readiness, learned tactile signature extraction, production contact-implicit planning superiority, general POMDP optimality, and safety certification.
+
+\section{Falsification Criteria}
+The paper would be weakened by a broad benchmark showing that practical contact representations almost never create empty feasible-action intersections under task-relevant margins. It would also be weakened if a much smaller prediction-only representation consistently preserved the same robust intersections across realistic contact domains, or if safe probing were always available before the first task action. The current paper does not rule out those possibilities; it provides an audit that future systems can run.
+
+\section{Implementation Runbook}
+A practical implementation should:
+\begin{enumerate}[leftmargin=*]
+\item Enumerate or sample local contact hypotheses.
+\item Define task families and safety/progress margins.
+\item Compute or learn feasible-action labels for task/action probes.
+\item Build alias classes for the current compressed representation.
+\item Test each alias/task pair for a nonempty robust action intersection.
+\item Split unsafe aliases by contact-cone signatures or refuse/replan.
+\item Report group count, bits, empty-alias rate, success, regret, and refusal.
+\item Re-audit after changing the tactile encoder, world model, or task family.
+\end{enumerate}
+
+\section{Detailed Family Specifications}
+Family A is the broad aggregate sweep. It crosses mode counts 32 and 64, four contact topologies, three friction profiles, two progress margins, two action-grid sizes, two task-grid sizes, two seeds, and ten representation methods. It is intentionally broad enough to avoid a one-library result while still small enough to keep each case auditable.
+
+Family B is a concise budget surface. It varies probe task count, action sector count, and probe placement. The important feature is not the number of rows but the axis: it directly measures the signature budget that the repair needs. The table shows that one-task signatures under-separate and that several higher-budget settings reach near-perfect success.
+
+Family C is a feasibility-label corruption audit. It sweeps false-positive and false-negative rates and compares raw noisy CCSC, conservative CCSC, thresholded CCSC, normal/friction bins, and raw identity. It is designed to prevent a hidden assumption that signatures are perfect.
+
+Family D is an ablation table. It includes random grouping, prediction grouping, normal-only grouping, normal/friction grouping, multiple CCSC variants, no-friction CCSC, random and greedy probe placement, safe refusal, and raw identity. It separates representation richness from the exact CCSC construction.
+
+Family E is the active-probe exception. The variables are probe cost, probe reliability, whether the first task action must already be safe, and representation method. This family is the numerical counterpart to the active-probe proposition.
+
+Family F is a negative-control library. It includes controls in which contact-count compression should almost work, controls in which signatures need to become rich, noisy-label controls, and coarse-action controls. It protects the paper from claiming that all compression is bad.
+
+Family G is a scale audit. It is deliberately concise because large mode counts are expensive under a pure Python runner, but it still checks whether CCSC group count grows below raw identity in the tested local libraries.
+
+Family H is the task-conditioned audit. Each row is a method, case, and task direction. This family is large because the theorem is defined for a task $g$. It is the correct row unit for the claim: a representation may be control-faithful for one task direction and control-destroying for another.
+
+\section{Numerical Ledger}
+\begin{table}[p]
+\centering
+\caption{Selected v3 numerical ledger. Values are means from generated summaries.}
+\label{tab:numerical-ledger}
+\small
+\begin{tabular}{llrrrr}
+\toprule
+Family & Method & Success & Empty alias & Regret & Groups\\
+\midrule
+A & contact count & 0.759 & 0.969 & 0.190 & 1.0\\
+A & random 3 bits & 0.906 & 0.242 & 0.152 & 8.0\\
+A & normal8 mu2 & 0.998 & 0.007 & 0.080 & 9.9\\
+A & CCSC 2x4 & 0.998 & 0.005 & 0.049 & 16.4\\
+A & CCSC 6x8 & 1.000 & 0.000 & 0.006 & 35.2\\
+A & CCSC 8x12 & 1.000 & 0.001 & 0.002 & 41.8\\
+A & raw mode & 1.000 & 0.000 & 0.000 & 48.0\\
+\midrule
+H & contact count & 0.764 & 0.962 & 0.187 & 1.0\\
+H & random 3 bits & 0.908 & 0.244 & 0.151 & 8.0\\
+H & normal8 mu2 & 0.999 & 0.004 & 0.074 & 9.9\\
+H & CCSC 2x4 & 0.999 & 0.004 & 0.046 & 16.5\\
+H & CCSC 6x8 & 1.000 & 0.000 & 0.005 & 35.5\\
+H & safe-refusal CCSC & 1.000 & 0.000 & 0.005 & 35.5\\
+H & raw mode & 1.000 & 0.000 & 0.000 & 48.0\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The ledger shows why the paper reports both success and empty-alias rate. Normal8+friction2 and CCSC both achieve high success in the local simulator, but they represent different design stories. Normal/friction bins rely on hand-selected physical variables. CCSC relies on an action-cone signature. Both are valid repairs if the features are available. Contact count and random grouping are the cautionary baselines: they can have nontrivial success while still having a high robust-alias failure rate.
+
+\section{Task-Conditioned Row Justification}
+Counting task-conditioned rows is not a statistical trick. The theorem is indexed by task $g$. For a fixed alias class, the intersection $\cap_c A_g(c)$ can be nonempty for one task direction and empty for another. A row that averages across task directions can hide the exact failure the theorem identifies. Family H therefore records one row per task direction.
+
+This also matches deployment practice. A robot may use the same tactile state for pushing left, pulling right, inserting downward, or stabilizing a sliding object. A compression that is safe for one of those tasks is not automatically safe for another. Task-conditioned rows make that distinction explicit and auditable.
+
+\section{Sufficient Condition For CCSC}
+CCSC is sufficient for the local robust-control goal when the signature is exact enough to imply equality of feasible action sectors over the task family. Let $\bar A_j$ partition the action set and let $\bar G$ contain the task $g$. Suppose that for every mode $c$ in an alias class and every sector $j$, the signature records whether $\bar A_j\cap A_g(c)$ is nonempty. If there exists a sector $j$ that is marked feasible for every mode in the alias and if the sector contains an action satisfying all margins for those modes, then the alias is control-faithful.
+
+This condition is only sufficient because sector-level signatures are coarse. Two modes may each mark the same sector feasible while the feasible subsets within the sector do not overlap. This is why action sector resolution matters. Increasing sector count reduces this within-sector ambiguity, while increasing task probe count reduces missed task directions.
+
+\section{Why Empty Aliases Are Stronger Than Failure Rate}
+Failure rate is distributional. It depends on how often each true mode appears, which tasks are sampled, and what action the compressed policy chooses. Empty-alias rate is structural. It asks whether a robust common action exists at all for the individually feasible modes inside an alias. A representation can have a tolerable average failure rate and still be unacceptable for safety-critical tasks because one rare mode is guaranteed to fail.
+
+This distinction is visible in the random grouping rows. Random 3-bit grouping in Family A succeeds on 0.906 of raw-controllable cases, which might look useful under an average metric. Its empty-alias rate is 0.242, meaning nearly a quarter of relevant alias/task pairs have no robust common action. That is not a controller tuning issue; it is a representation failure.
+
+\section{Active-Probe Cost Model}
+Family E uses a simple cost proxy:
+\[
+J = 1 + c_p N_p + c_f(1-\rho),
+\]
+where $c_p$ is probe cost, $N_p$ is the number of probes, $c_f$ is failure cost, and $\rho$ is success probability. In probe-allowed cases, a reliable probe can identify the raw mode before the task action. In first-action-required cases, the probe cannot change the initial action because the robot must already act safely.
+
+The model is intentionally simple. It does not optimize a POMDP. It distinguishes the two regimes that matter for the theorem: information can be acquired before the critical action, or it cannot. If it can, compression may be acceptable with probing. If it cannot, the alias intersection must already be nonempty.
+
+\section{Noisy Signature Failure Modes}
+There are four relevant failure modes for learned or estimated signatures. A false feasible label can merge modes that should be split. A false infeasible label can split modes unnecessarily and inflate representation size. Correlated noise can make repeated probes confidently wrong. Distribution shift can make a signature valid for training tasks but invalid for a new task family.
+
+The v3 noise family is a first audit, not a complete solution. It shows that conservative and thresholded variants can be robust in the synthetic setting, while raw noisy labels can degrade. A real tactile implementation would need calibration curves, held-out contact geometries, independent sensing checks, and refusal policies for uncertain signatures.
+
+\section{Bit Budget Interpretation}
+Bits are reported as $\lceil\log_2 K\rceil$ where $K$ is the number of represented groups. This is not a memory-layout benchmark. It is a compactness ledger. Contact count has zero bits and fails often. Raw identity has enough bits to encode every mode and succeeds by construction. CCSC's value is occupying the middle: enough bits to preserve task-feasible action intersections, fewer groups than raw identity in the tested libraries.
+
+The correct target is not the fewest bits. It is the fewest bits that keep empty-alias rate below the safety tolerance for the task family. Family B gives one way to estimate that target by sweeping probe task and action sector budgets.
+
+\section{Prediction Versus Control Faithfulness}
+Prediction grouping can be strong when prediction probes are action-conditioned and task-aligned. It can be weak when predictions are averaged across actions or when the prediction target ignores the contact constraint needed for the next action. The theorem gives a diagnostic: after learning or choosing a prediction representation, test each alias class for feasible-action intersection. If the test fails, prediction fidelity did not preserve the control-relevant variable.
+
+This perspective turns the paper into a tool for learned representations. A world model does not need to expose the exact normal angle or friction coefficient if its latent state preserves the action-cone intersections the controller needs. Conversely, a beautiful latent reconstruction is not enough if it merges disjoint action cones.
+
+\section{Constructed Counterexamples}
+A minimal counterexample has two modes and one task. Mode $c_1$ permits only actions in a left sector, while mode $c_2$ permits only actions in a right sector. Both modes are individually feasible. Contact-count compression maps them to one state. The intersection is empty, so any deterministic compressed policy fails on one mode.
+
+A prediction-alias counterexample adds a feature map whose average next-state prediction is similar for both modes under a training distribution. If the task requires an action outside the average distribution, the prediction feature can merge modes that still have disjoint task-feasible actions. Family F's prediction-alias control is a synthetic version of this risk.
+
+A raw-identity-needed counterexample spreads low-friction modes so narrowly that small normal changes alter feasible sectors. In that case CCSC must create many groups. This is not a contradiction. It says that robust control faithfulness sometimes requires a rich state.
+
+\section{Deployment Acceptance Tests}
+\begin{table}[p]
+\centering
+\caption{Operational acceptance tests for a future robot implementation.}
+\label{tab:acceptance-tests}
+\small
+\begin{tabular}{p{0.25\linewidth}p{0.36\linewidth}p{0.29\linewidth}}
+\toprule
+Test & Measurement & Pass condition\\
+\midrule
+Alias intersection & Common feasible action per alias/task. & Empty-alias rate below task safety tolerance.\\
+Signature calibration & Reliability of feasible/infeasible labels. & High-confidence feasible labels are actually feasible.\\
+Probe permission & Whether a probe may precede the task action. & If not, first-action aliases must already be faithful.\\
+Probe cost & Time, wear, or risk of disambiguating contacts. & Probe value exceeds cost in probe-allowed regimes.\\
+Margin sensitivity & Empty-alias rate as margins increase. & Compression remains faithful at deployment margins.\\
+Distribution shift & Held-out geometries, frictions, and tasks. & Signature remains faithful outside training cases.\\
+Refusal behavior & Rate and safety of refusal/replan. & Unsafe aliases trigger refusal instead of brittle actions.\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{Hardware Study Not Claimed}
+A hardware study would need tactile sensing, calibrated contact hypotheses, safe probing policies, and repeated trials across real contact geometries. It should report alias intersections, success, refusal, slips, contact losses, task completion, calibration error, and probe cost. It should compare contact-count labels, tactile latents, normal/friction estimators, CCSC-like signatures, active probing, and raw or high-fidelity estimates where available. This paper does not claim that study.
+
+\section{Learned Signature Protocol}
+A learned CCSC signature would collect action-labeled contact data. For each contact observation and task probe, the robot would label which action sectors are feasible under safety margins. A classifier or latent encoder would predict the signature. The acceptance test would not be reconstruction accuracy; it would be alias intersection on held-out modes and tasks. The learned signature must be rejected or refined if it creates empty aliases.
+
+\section{Relation To Bisimulation}
+Bisimulation-style abstractions merge states that preserve transition and reward behavior. The contact-cone test is a local robust-control analogue. It says that for the immediate task action, the abstraction must preserve the existence of a common feasible action. This is narrower than full MDP equivalence and easier to audit in a contact controller. It is also stricter than average prediction error because it asks for a robust intersection, not an expected next state.
+
+\section{Why The Suite Is Still Synthetic}
+The v3 suite is larger, but it remains synthetic. More rows do not magically create hardware validation. The value of the suite is that it attacks the representation claim from several directions: scale, task direction, signature budget, label noise, active probing, negative controls, and baselines. The suite supports the mechanism and its boundaries. It does not replace real contact experiments.
+
+\section{Documentation Ledger}
+The repository records the plan, full-scale evidence summary, generated rows, generated figures, and final validation report. Legacy v1/v2 artifacts remain for audit history, but the final manuscript is based on the v3 full-scale directory. The final PDF is not kept as \texttt{paper/main.pdf}; it is copied to \texttt{C:/Users/wangz/Downloads/27.pdf} only after final verification.
+
+\section{Extended Task Audit Examples}
+Consider a contact-count alias that contains all modes. For a task direction aligned with one subset of normals, modes whose normals face that task may allow inward pushes with positive progress. Modes on the opposite side may require actions in a different sector or may be individually feasible only through tangential transmission. If both subsets are individually feasible but require disjoint sectors, the alias is destroyed for that task. A different task direction may rotate the feasible sectors and make a different subset of modes responsible for the empty intersection.
+
+This is why task-conditioned rows matter. A single alias class can alternate between faithful and unfaithful as $g$ changes. A paper that reports only mean success over tasks can hide a task direction that is safety-critical for insertion, extraction, or stabilization. Family H stores those task-level rows so a future system can search for worst-case task directions, not only average performance.
+
+\section{Parameter Sensitivity Notes}
+Progress margin controls how much task-directed motion is required. As the margin increases, feasible-action sets shrink. This can increase empty-alias rate even when the same contact modes are used. Contact margin controls how hard the action must push into the contact normal. Increasing contact margin removes grazing actions that may have been common to several modes. Action count controls discretization: too few actions can make every representation look worse because no sampled action lies in a narrow intersection.
+
+Friction profile changes how much tangential motion can be transmitted. Low-friction modes tend to have narrower feasible sectors, increasing the need for normal information. High-friction modes can share more actions. Bimodal friction profiles create aliases where normal direction may look similar but tangential capability differs. Topology changes whether modes are spread evenly, clustered, paired, or adversarially interleaved around task directions.
+
+\section{Why Normal/Friction Baselines Are Not A Defeat}
+The strong normal8+friction2 baseline shows that the simulator is physically interpretable. If the representation explicitly stores the variables that determine feasible action cones, it should do well. That is a useful baseline, not a threat to the thesis. The thesis is that compressed contact state must preserve control-cone distinctions. Normal/friction bins are one hand-engineered way to do so. CCSC is another way, expressed directly in terms of task/action feasibility.
+
+In a learned tactile system, normal and friction may not be directly available, may be noisy, or may not be the only relevant variables. A CCSC-style audit can still be applied to the learned latent: group states by the latent code and test whether the group preserves feasible-action intersections. If it does, the latent is control-faithful for that task family. If it does not, the latent should be refined, probed, or rejected.
+
+\section{Safety Case Template}
+A safety case for contact compression should include the following claims. First, the task family and margins are defined before evaluation. Second, the contact hypotheses cover the contact regimes expected at deployment. Third, the feasible-action labeler is calibrated or conservatively bounded. Fourth, every compressed alias has a common feasible action or triggers refusal/replan. Fifth, any active probe is safe before the task action and has measured reliability. Sixth, the audit is repeated under held-out geometries and friction regimes.
+
+This template is stricter than average reward evaluation. It asks for a certificate that the first action chosen under a compressed contact state is robust to the hidden modes inside that state. That is exactly the condition the theorem identifies.
+
+\section{Learned World Model Audit}
+For a learned world model, the audit can be performed after training. Collect a validation set of contact observations, local task directions, and action feasibility labels. Map each observation to its latent or symbolic compressed state. For every latent group and task, compute whether individually feasible examples share a feasible action sector. Report empty-alias rate, worst-case task direction, group size distribution, and the number of groups that require refusal.
+
+This audit does not require the latent to be interpretable. It only requires action-feasibility labels or a conservative test for them. A black-box latent can pass if it preserves the action intersections. An interpretable contact label can fail if it merges disjoint cones. The audit therefore complements, rather than replaces, representation learning.
+
+\section{Action Discretization Caveat}
+The experiments use discretized action directions. The theorem itself is set-theoretic and applies to continuous action sets, but the empirical audit approximates those sets by sectors and sampled actions. If the action grid is too coarse, a true continuous intersection may be missed. If sectors are too coarse, two modes may share a sector label while their feasible subsets inside the sector are disjoint.
+
+A real implementation should refine action sectors near decision boundaries and use continuous feasibility checks when possible. The v3 suite reports action count and sector count precisely so the discretization assumption is visible. The action discretization is not a hidden detail; it is part of the signature budget.
+
+\section{Refusal And Replanning}
+Safe refusal is a natural companion to contact compression. If an alias is not control-faithful, the controller should not silently choose an average action. It should probe, split the state, replan, or refuse. The safe-refusal rows in Family D and H show that refusal rates can be low when CCSC has already separated most aliases. In harder domains, refusal may be higher. That is acceptable if the alternative is an unsafe action.
+
+The paper therefore should not be read as insisting on a one-shot feedforward controller. It says that if a controller is forced to act from a compressed state, the alias must have a common feasible action. If it does not, a higher-level system should change the information state before acting.
+
+\section{Additional Reviewer Questions}
+\paragraph{Does stochastic control avoid the theorem?}
+Not for robust guarantee. A randomized policy samples an action from a distribution that is independent of the hidden mode inside the alias. If no single action works for all modes, then every sampled action fails for at least one mode. Randomization can improve expected success under a distribution, but it cannot create a robust common action.
+
+\paragraph{Does compliance avoid the theorem?}
+Compliance can enlarge feasible-action sets if contact dynamics safely adapt after contact. In the formalism, that means $A_g(c)$ should be defined for the compliant controller's action primitive rather than for a rigid push. The intersection test still applies to the resulting primitive set.
+
+\paragraph{Does multi-step feedback avoid the theorem?}
+Only if the first step can safely gather information or move to a state where the modes become distinguishable. If the first step must already satisfy the task/safety predicate, the local theorem applies.
+
+\section{Extended Claim Map}
+\begin{table}[p]
+\centering
+\caption{Extended claim map for final scope control.}
+\label{tab:extended-claim-map}
+\small
+\begin{tabular}{p{0.30\linewidth}p{0.28\linewidth}p{0.32\linewidth}}
+\toprule
+Claim & Evidence & Boundary\\
+\midrule
+Coarse contact compression can destroy robust control. & Contact-count rows in Families A, D, E, G, and H. & Applies to local first-action tasks.\\
+Action-cone signatures repair most measured failures. & CCSC 6x8 and 8x12 rows across aggregate and task audits. & Requires rich and reliable signatures.\\
+Average success is not enough. & Random grouping has decent success but high empty-alias rate. & Safety-critical tasks need robust intersections.\\
+Active probing can be valid. & Family E probe-allowed rows. & Probe must be safe, reliable, and before the task action.\\
+Compression can be safe in easy domains. & Shared-action negative control. & Does not hold for adversarial or high-margin modes.\\
+The paper is not hardware-ready. & Limitations and hardware-not-claimed section. & Future work must test real contacts.\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{Audit Commands}
+The final audit uses ordinary repository commands rather than hidden notebooks. The runner command is \texttt{python scripts/full\_scale\_contact.py}. The Python compile check is \texttt{python -m py\_compile scripts/full\_scale\_contact.py src/contact\_compression.py}. The PDF build sequence is \texttt{pdflatex}, \texttt{bibtex}, \texttt{pdflatex}, \texttt{pdflatex} from the \texttt{paper} directory. The exported PDF is checked with \texttt{pdfinfo}, \texttt{pdftotext}, and \texttt{Get-FileHash}.
+
+The expected metadata values are: stage complete, seed 27027, 85,674 rows, 1,290 cases, and zero plot failures. The expected text markers in the final PDF are \texttt{v3 final full-scale}, \texttt{85,674}, \texttt{1,290}, \texttt{one probe task}, \texttt{active probing}, and \texttt{does not claim hardware validation}.
+
+\section{Failure Triage For Future Runs}
+If a future run shows high contact-count success and low empty-alias rate, first check whether the mode library is a shared-action control. If it is, the result is not a failure; it means compression is safe in that regime. If CCSC has low success, inspect the signature budget, label corruption, and action discretization before changing the theorem. If raw identity has low success, the task is not raw-controllable and the compression audit is no longer isolating representation failure.
+
+If a learned signature has high success but high group count, the representation may simply be approximating raw identity. That can be acceptable for safety but not for compression. If it has low group count and high empty-alias rate, it is compact but unsafe. The useful region is the middle: low empty-alias rate with fewer groups than raw identity.
+
+\section{Final Artifact Criteria}
+The final artifact is considered valid only if the source, evidence, and exported PDF agree. The manuscript must cite the same row and case counts as \texttt{metadata.json}. The figures and tables must come from \texttt{results/full\_scale}. The final PDF must be in \texttt{C:/Users/wangz/Downloads/27.pdf}. The local \texttt{paper/main.pdf} must be removed after export so there is only one canonical PDF target. The docs must record the final page count, byte count, hash, scope, and limitations.
+
+\section{Why The Manuscript Is Longer}
+The v3 manuscript is longer because the paper is now audited rather than illustrated. The added content includes the full-scale suite, task-conditioned rows, budget surfaces, noise analysis, active probing, ablations, negative controls, scale curves, row schema, validation checks, reviewer attacks, and reproducibility details. These sections are the substance needed to make the scoped claim submission-ready under the current batch standard.
+
+\section{Final Acceptance Checklist}
+Before Paper27 is considered final, the following must be true: the full-scale plan exists; the runner compiles; the full-scale run completes with at least 75,000 rows; the manuscript builds to at least 25 pages; the PDF contains the v3 marker, 85,674 row count, 1,290 case count, headline positive findings, signature-budget boundary, active-probe boundary, and no-hardware limitation; the final PDF is copied to \texttt{C:/Users/wangz/Downloads/27.pdf}; local \texttt{paper/main.pdf} is removed; docs record page count, bytes, and SHA256; and the repo is committed, pushed, clean, and equal to upstream before Paper28 begins.
 
 \end{document}

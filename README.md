@@ -2,46 +2,47 @@
 
 Anonymous ICLR-style paper package for Paper 27 in the robotics/embodied-intelligence batch.
 
+## Final V3 State
+
+- Canonical PDF: `C:/Users/wangz/Downloads/27.pdf`.
+- Page count: 25.
+- PDF bytes: 333998.
+- PDF SHA256: `33273D7AEDE66A426953DD00D1BE14D571B78C42D83F9B3AF0B8B41465949179`.
+- Local `paper/main.pdf`: intentionally absent after export.
+- Full-scale suite: 85,674 streamed rows over 1,290 deterministic cases, seed 27027, zero plot failures.
+
 ## Thesis
 
-Compressed contact state can destroy controllability when it aliases contact modes whose task-feasible action sets have empty intersection. The proposed repair is contact-cone separating compression: retain the minimal action-separating contact predicates needed to preserve a robust feasible-action intersection.
-
-## Hardening Status
-
-This is the v2 submission-hardened version. The added signature-budget stress test shows that CCSC depends on sufficiently rich task/action probes: with one probe task and two action sectors, success falls to 0.931 and the empty-alias rate rises to 0.260, while the six-probe/eight-sector setting keeps empty-alias rate at 0.007.
-
-## Reproduce
-
-From this repository root on Windows PowerShell:
-
-```powershell
-python scripts/literature_sweep.py
-python scripts/run_experiments.py
-python scripts/write_paper.py
-powershell -ExecutionPolicy Bypass -File scripts/build_pdf.ps1
-```
-
-The build script copies the final PDF to:
-
-```text
-C:/Users/wangz/Downloads/27.pdf
-```
+Compressed contact state can destroy controllability when it aliases contact modes whose task-feasible action sets have empty intersection. The repair is contact-cone separating compression (CCSC): retain action/task feasible-cone signatures rich enough to preserve robust feasible-action intersections.
 
 ## Main Artifacts
 
-- `docs/related_work_matrix.csv`: 1000-paper landscape matrix.
-- `docs/literature_map.md`: field box, assumptions, directions, and chosen thesis.
-- `docs/hostile_prior_work.md`: 100-paper hostile prior-work set.
-- `docs/novelty_boundary_map.md`: novelty boundaries and weak moves rejected.
-- `docs/claims.md`: formal and empirical claim status.
-- `docs/reviewer_attacks.md`: likely reviewer objections and responses.
-- `docs/submission_attack_log.md`: submission-hardening attacks and outcomes.
-- `docs/submission_readiness_decision.md`: workshop-only / strong-revise decision.
-- `src/contact_compression.py`: local friction-cone contact model.
-- `scripts/run_experiments.py`: regenerates results and figures.
-- `results/signature_budget_stress.csv`: v2 stress test of CCSC probe richness.
-- `paper/main.tex`: anonymous ICLR-style manuscript.
+- `docs/full_scale_execution_plan.md`: detailed v3 execution plan written before substantive v3 edits.
+- `scripts/full_scale_contact.py`: RAM-light full-scale v3 experiment runner.
+- `results/full_scale/`: streamed rows, summaries, metadata, generated TeX tables.
+- `figures/full_scale/`: generated final figures.
+- `paper/main.tex`: final 25-page manuscript.
+- `docs/validation_report.json`: final export and verification record.
 
-## Notes
+Legacy v1/v2 outputs remain for audit history, but the final manuscript is based on the v3 full-scale suite.
 
-The experiment is intentionally local and auditable. It is not a high-fidelity robot simulator or a hardware claim. The central evidence is the mechanism: once a representation merges modes with disjoint feasible action sets, no downstream deterministic compressed-state controller can choose one action that works for all of them. The v2 stress test narrows the repair claim: action-cone signatures help only when the probes are rich enough to separate the relevant cones.
+## Reproduce
+
+```powershell
+python scripts/full_scale_contact.py
+cd paper
+pdflatex -interaction=nonstopmode -halt-on-error main.tex
+bibtex main
+pdflatex -interaction=nonstopmode -halt-on-error main.tex
+pdflatex -interaction=nonstopmode -halt-on-error main.tex
+```
+
+## Headline Findings
+
+- Family A contact-count success: 0.759; empty-alias rate: 0.969.
+- Family A CCSC 6x8 success: 0.999954; empty-alias rate: 0.000389.
+- Family H task-conditioned rows: 80,640 rows; contact-count success 0.764 versus CCSC 6x8 success 0.999932.
+- Signature-budget boundary: one probe task/two sectors leaves success near 0.956 and empty-alias rate near 0.115.
+- Active probing helps only when a reliable probe is allowed before the task action.
+
+The final claim is synthetic and local. It does not claim hardware validation, learned tactile signature extraction, production contact-implicit planning superiority, general POMDP optimality, or safety certification.

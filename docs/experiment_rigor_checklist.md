@@ -1,15 +1,23 @@
 # Experiment Rigor Checklist
 
-- [x] Main local contact simulator is `src/contact_compression.py`.
-- [x] Main experiment script is `scripts/run_experiments.py`.
-- [x] Main sweep evaluates 64 contact modes, 180 action directions, and 24 task directions.
-- [x] Evaluation is conditioned on raw-mode controllability.
-- [x] Baselines include contact count, normal bins, normal-plus-friction bins, CCSC, and raw mode identity.
-- [x] V2 signature-budget stress attacks the probe-rich-signature assumption.
-- [x] Negative boundary is explicit: one probe task/two action sectors gives success 0.931 and empty-alias rate 0.260.
-- [ ] No high-fidelity robot simulator.
+- [x] Detailed v3 plan written before substantive edits.
+- [x] Full-scale runner exists: `scripts/full_scale_contact.py`.
+- [x] Runner compiles with `python -m py_compile`.
+- [x] Full-scale suite completed: 85,674 rows over 1,290 cases.
+- [x] Metadata records seed 27027 and zero plot failures.
+- [x] Family A covers mode count, topology, friction profile, margin, action grid, task grid, seed, and representation.
+- [x] Family B attacks the signature-budget assumption.
+- [x] Family C attacks noisy feasibility labels.
+- [x] Family D includes baselines and ablations.
+- [x] Family E tests active-probe exceptions.
+- [x] Family F includes negative controls.
+- [x] Family G tests scale.
+- [x] Family H records task-conditioned rows.
+- [x] Final manuscript is 25 pages.
+- [x] Canonical PDF exported to Downloads and local PDF removed.
 - [ ] No hardware validation.
-- [ ] No learned tactile/contact signature estimator.
-- [ ] No belief-space or active-probing controller baseline.
+- [ ] No learned tactile estimator.
+- [ ] No production contact-implicit planning integration.
+- [ ] No general POMDP baseline.
 
-Decision: mechanism evidence only; terminal state is workshop-only / strong-revise.
+Decision: final synthetic mechanism paper under the current batch standard.
