@@ -1,10 +1,17 @@
 # Claims
 
-| Claim | Type | Current support | Risk |
+| Claim | Status | Support | Caveat |
 |---|---|---|---|
-| If two contact modes share a compressed state but have disjoint task-feasible action sets, no deterministic policy using only that compressed state can guarantee the one-step task progress for both modes. | Formal theorem | Proved in paper from set intersection contradiction. | One-step/local; history or probing may help when safety allows. |
-| Contact-count or coarse-normal compression frequently creates empty feasible-action intersections in frictional contact. | Empirical | Measured in the runnable cone simulator. | Simulator is deliberately local and simplified. |
-| Control-cone signature repair recovers most raw-mode success with fewer bits than exact mode identity. | Empirical/mechanistic | Measured by grouping modes by feasible-action signatures. | Depends on action/task discretization and known cone model. |
-| Control-cone signature repair needs sufficiently rich task/action probes. | Empirical negative boundary | V2 signature-budget stress: one probe task/two action sectors gives success 0.931 and empty-alias rate 0.260, versus 0.999 success and 0.007 empty-alias rate for six probe tasks/eight sectors. | Still a local analytic-contact simulator; does not prove the same threshold on hardware. |
-| Prediction-faithful compression is not sufficient for control-faithful contact compression. | Conceptual/formal example | Supported by constructed aliases with identical compressed observation and different control cones. | Needs broader real-robot validation. |
-| The contribution is not a new contact simulator or tactile estimator. | Scope claim | Supported by novelty boundary map and hostile prior work. | Reviewers may ask for real hardware. |
+| Empty feasible-action intersections make deterministic compressed contact control impossible for the aliased modes. | Formal theorem. | Proof in `paper/main.tex`. | One-step/local; probing or belief can help if allowed before the critical action. |
+| Coarse contact compression frequently creates empty feasible-action intersections in the synthetic contact model. | Empirical v3 claim. | Family A contact-count success 0.759 and empty-alias rate 0.969; Family H contact-count success 0.764 and empty-alias rate 0.962. | Synthetic local model only. |
+| CCSC repairs most measured failures when signatures are rich enough. | Empirical v3 claim. | Family A CCSC 6x8 success 0.999954 and empty-alias rate 0.000389; Family H CCSC 6x8 success 0.999932. | Depends on task/action probes and reliable feasibility labels. |
+| Low-budget signatures under-separate action cones. | Empirical boundary. | Family B one probe/two sectors success near 0.956 and empty-alias near 0.115. | Thresholds are model-specific. |
+| Active probing is an exception, not a contradiction. | Formal boundary plus v3 evidence. | Family E probe-allowed settings rescue contact-count aliases; first-action-required settings do not. | Probe must be safe, reliable, and before the task action. |
+
+## Unsupported Claims
+
+- Hardware readiness.
+- Learned tactile signature extraction.
+- Superiority over production contact-implicit planners.
+- General POMDP optimality.
+- Safety certification.

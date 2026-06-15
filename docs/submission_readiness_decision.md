@@ -1,25 +1,27 @@
 # Submission Readiness Decision
 
-Decision: workshop-only / strong-revise.
+Decision: final v3 synthetic mechanism paper under the current batch standard.
 
-## Why Not Submit-Ready
+## Why It Meets The Batch Standard
 
-- Evidence is local and analytic rather than high-fidelity simulated or robotic.
-- The theorem is one-step and deterministic.
-- The repair assumes action-feasibility labels or a contact model.
-- V2 shows low-budget signatures under-separate control cones.
-- There is no belief-space probing, robust MPC, or contact-implicit planning baseline.
+- The manuscript is 25 pages.
+- The v3 suite completed 85,674 rows over 1,290 cases.
+- The main positive claim is supported by Family A and Family H.
+- Signature-budget, noise, active-probe, ablation, negative-control, and scale boundaries are explicit.
+- The final PDF is verified and exported only to Downloads.
 
-## Why Not Kill
+## Why It Remains Scoped
 
-- The feasible-action-intersection certificate is crisp and physically interpretable.
-- The experiment directly matches the theorem's mechanism.
-- CCSC recovers near-raw success under a transparent, auditable signature.
-- The v2 stress makes the repair boundary explicit rather than hiding it.
+- Synthetic local contact model.
+- One-step deterministic theorem.
+- No hardware validation.
+- No learned tactile estimator.
+- No production contact-implicit planner.
+- No general POMDP baseline.
 
-## Required Next Work
+## Final Artifact
 
-- Validate on realistic manipulation contacts with noisy friction and geometry.
-- Learn action-cone signatures from data.
-- Add active probing and belief-state baselines.
-- Quantify how many task/action probes are needed across broader contact families.
+- `C:/Users/wangz/Downloads/27.pdf`
+- 25 pages.
+- 333998 bytes.
+- SHA256 `33273D7AEDE66A426953DD00D1BE14D571B78C42D83F9B3AF0B8B41465949179`.

@@ -1,0 +1,32 @@
+{
+  "paper": 27,
+  "stage": "v3_final_full_scale",
+  "timestamp": "2026-06-15 08:19:00 +01:00",
+  "experiment": {
+    "script": "scripts/full_scale_contact.py",
+    "seed": 27027,
+    "elapsed_seconds": 919.2062415999826,
+    "total_rows": 85674,
+    "total_cases": 1290,
+    "plot_failures": 0
+  },
+  "final_pdf": {
+    "path": "C:/Users/wangz/Downloads/27.pdf",
+    "pages": 25,
+    "bytes": 333998,
+    "sha256": "33273D7AEDE66A426953DD00D1BE14D571B78C42D83F9B3AF0B8B41465949179",
+    "local_paper_main_pdf_present": false
+  },
+  "checks": {
+    "python_py_compile_full_scale_contact": true,
+    "latex_undefined_references": false,
+    "latex_undefined_citations": false,
+    "latex_overfull_boxes": false,
+    "pdf_text_contains_v3_marker": true,
+    "pdf_text_contains_row_count": true,
+    "pdf_text_contains_case_count": true,
+    "pdf_text_contains_budget_boundary": true,
+    "pdf_text_contains_active_probe_boundary": true,
+    "pdf_text_contains_no_hardware_scope": true
+  }
+}

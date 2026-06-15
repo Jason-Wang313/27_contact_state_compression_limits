@@ -1,15 +1,18 @@
 # Submission Attack Log
 
-Updated: 2026-06-13
+Updated: 2026-06-15 08:19:00 +01:00
 
 ## Attack Rounds
 
-1. Closest-prior attack: planar pushing, contact-implicit optimization, tactile state estimation, and MDP abstraction already cover large parts of the field. Response: keep novelty to a contact-specific feasible-action-intersection certificate for compressed representations.
-2. Formality attack: the theorem is one-step and deterministic. Response: state the limit as a local obstruction for cases where the first action must already satisfy task and safety constraints.
-3. Evidence attack: the main experiment is a local analytic friction-cone simulator. Response: keep the claim mechanistic and auditable, not hardware-validated.
-4. Repair attack: CCSC may simply hide the hard part in a rich action-feasibility signature. Response: add v2 signature-budget stress.
-5. Artifact attack: the canonical PDF must be Downloads-only, with no Desktop or local `paper/main.pdf` copy. Response: build script copies to `C:/Users/wangz/Downloads/27.pdf` and removes the local PDF after copy.
+1. Toy-evidence attack. Response: add v3 full-scale suite with 85,674 rows and 1,290 cases.
+2. Task-averaging attack. Response: add Family H with 80,640 task-conditioned rows.
+3. Signature-budget attack. Response: add Family B budget surface.
+4. Noisy-label attack. Response: add Family C label corruption.
+5. Baseline attack. Response: add random, prediction, normal/friction, CCSC variants, refusal, and raw baselines.
+6. Probing attack. Response: add Family E active-probe exception.
+7. Overclaim attack. Response: keep hardware, learned tactile estimation, POMDP optimality, and safety certification out of scope.
+8. Artifact attack. Response: final PDF verified in Downloads; local `paper/main.pdf` removed.
 
-## V2 Outcome
+## V3 Outcome
 
-The paper remains workshop-only / strong-revise. The impossibility certificate is sharp, but v2 shows the repair is conditional: one probe task and two action sectors leave empty aliases at 0.260, while the six-probe/eight-sector setting lowers them to 0.007.
+The paper is final under the current batch standard as a scoped synthetic mechanism paper.
