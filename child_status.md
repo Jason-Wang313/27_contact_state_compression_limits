@@ -1,6 +1,7 @@
 # Child Status: Paper 27
 
-Stage: v3 final full-scale complete; ready for commit and push.
+Stage: v3 final full-scale complete; VLA link-box hardening exported and
+verified; ready for commit and push.
 
 Latest actions:
 - Wrote `docs/full_scale_execution_plan.md` before substantive v3 work.
@@ -10,15 +11,20 @@ Latest actions:
 - Built with `pdflatex`, `bibtex`, `pdflatex`, `pdflatex`.
 - Copied the verified final PDF to `C:/Users/wangz/Downloads/27.pdf`.
 - Removed local `paper/main.pdf` after canonical export.
+- Added explicit VLA-style `hyperref` boxed-link policy and rebuilt twice so
+  cross-reference logs are clean after anchors were introduced.
 
 Verification:
 - Downloads PDF exists: true.
 - Downloads PDF pages: 25.
-- Downloads PDF bytes: 333998.
-- Downloads PDF SHA256: `33273D7AEDE66A426953DD00D1BE14D571B78C42D83F9B3AF0B8B41465949179`.
+- Downloads PDF bytes: 382832.
+- Downloads PDF SHA256: `D87F6B88C548175E7B4BABB05B2AF07B3AB70B2CA4AC170D1CC3774C777CD467`.
 - Required PDF text markers found: `v3 final full-scale`, `85,674`, `1,290`, `one probe task`, `active probing`, and `does not claim hardware validation`.
 - `python -m py_compile .\scripts\full_scale_contact.py .\src\contact_compression.py` passed.
 - Final LaTeX log has no undefined references, undefined citations, or overfull boxes.
+- Link annotation inventory is green = 24, red = 1, cyan = 0, with one-point
+  borders on all 25 link annotations.
+- Rendered link pages 2, 3, and 5 were visually inspected.
 - Local `paper/main.pdf` is absent.
 
 Next:

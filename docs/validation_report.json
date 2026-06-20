@@ -13,9 +13,22 @@
   "final_pdf": {
     "path": "C:/Users/wangz/Downloads/27.pdf",
     "pages": 25,
-    "bytes": 333998,
-    "sha256": "33273D7AEDE66A426953DD00D1BE14D571B78C42D83F9B3AF0B8B41465949179",
-    "local_paper_main_pdf_present": false
+    "bytes": 382832,
+    "sha256": "D87F6B88C548175E7B4BABB05B2AF07B3AB70B2CA4AC170D1CC3774C777CD467",
+    "local_paper_main_pdf_present": false,
+    "link_box_visual_hardening": {
+      "date": "2026-06-20",
+      "role_model_pdf": "C:/Users/wangz/Downloads/certified-tailguard-vla-iclr-submission.pdf",
+      "link_pages": [[2, 22], [3, 2], [5, 1]],
+      "annotation_colors": {
+        "green": 24,
+        "red": 1,
+        "cyan": 0
+      },
+      "border_widths": ["0 0 1"],
+      "rendered_pages": [2, 3, 5],
+      "visual_audit": "Rendered affected pages were inspected; green citation boxes and the red internal-reference box are crisp and aligned, and no cyan boxes are present."
+    }
   },
   "checks": {
     "python_py_compile_full_scale_contact": true,

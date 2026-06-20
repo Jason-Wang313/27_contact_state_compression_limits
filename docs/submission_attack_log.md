@@ -1,6 +1,6 @@
 # Submission Attack Log
 
-Updated: 2026-06-15 08:19:00 +01:00
+Updated: 2026-06-20
 
 ## Attack Rounds
 
@@ -12,6 +12,9 @@ Updated: 2026-06-15 08:19:00 +01:00
 6. Probing attack. Response: add Family E active-probe exception.
 7. Overclaim attack. Response: keep hardware, learned tactile estimation, POMDP optimality, and safety certification out of scope.
 8. Artifact attack. Response: final PDF verified in Downloads; local `paper/main.pdf` removed.
+9. Visual artifact attack. Response: added explicit VLA-style boxed-link
+   policy, rebuilt the Downloads PDF, inventoried all link annotations, and
+   inspected rendered affected pages.
 
 ## V3 Outcome
 

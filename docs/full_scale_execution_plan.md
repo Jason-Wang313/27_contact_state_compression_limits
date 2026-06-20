@@ -1,5 +1,16 @@
 # Paper27 Full-Scale Execution Plan
 
+## 2026-06-20 Visual-Hardening Addendum
+
+The final v3 manuscript was rebuilt with the explicit VLA role-model hyperref
+policy for boxed links. The Downloads artifact remains 25 pages and is now:
+
+- Path: `C:/Users/wangz/Downloads/27.pdf`
+- Size: 382832 bytes
+- SHA256: `D87F6B88C548175E7B4BABB05B2AF07B3AB70B2CA4AC170D1CC3774C777CD467`
+- Link-box inventory: green = 24, red = 1, cyan = 0, with one-point borders on
+  all 25 link annotations.
+
 ## Current Claim
 
 The current paper argues that compressed contact state can destroy controllability when an alias class merges contact modes whose task-feasible action sets have empty intersection. The repair is contact-cone separating compression (CCSC): preserve enough action/task feasible-cone signature information to split aliases that have no common robust action.
