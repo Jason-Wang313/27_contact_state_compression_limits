@@ -8,8 +8,10 @@
 - Elapsed experiment time: 919.206 seconds.
 - Final PDF: `C:/Users/wangz/Downloads/27.pdf`.
 - Final PDF pages: 25.
-- Final PDF bytes: 333998.
-- Final PDF SHA256: `33273D7AEDE66A426953DD00D1BE14D571B78C42D83F9B3AF0B8B41465949179`.
+- Final PDF bytes: 382832.
+- Final PDF SHA256: `D87F6B88C548175E7B4BABB05B2AF07B3AB70B2CA4AC170D1CC3774C777CD467`.
+- Final PDF link boxes: green citations = 24, red internal references = 1,
+  cyan = 0, with one-point borders on all 25 link annotations.
 
 ## Headline Numbers
 

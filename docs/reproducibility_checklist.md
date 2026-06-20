@@ -7,9 +7,11 @@
 - [x] Final paper source: `paper/main.tex`.
 - [x] Canonical PDF: `C:/Users/wangz/Downloads/27.pdf`.
 - [x] Canonical PDF pages: 25.
-- [x] Canonical PDF bytes: 333998.
-- [x] Canonical PDF SHA256: `33273D7AEDE66A426953DD00D1BE14D571B78C42D83F9B3AF0B8B41465949179`.
+- [x] Canonical PDF bytes: 382832.
+- [x] Canonical PDF SHA256: `D87F6B88C548175E7B4BABB05B2AF07B3AB70B2CA4AC170D1CC3774C777CD467`.
 - [x] Local `paper/main.pdf` removed after canonical copy.
+- [x] VLA-style link boxes verified with pypdf inventory and rendered-page
+  visual inspection.
 
 Verification commands:
 

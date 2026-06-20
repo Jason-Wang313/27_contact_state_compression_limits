@@ -6,9 +6,12 @@ Anonymous ICLR-style paper package for Paper 27 in the robotics/embodied-intelli
 
 - Canonical PDF: `C:/Users/wangz/Downloads/27.pdf`.
 - Page count: 25.
-- PDF bytes: 333998.
-- PDF SHA256: `33273D7AEDE66A426953DD00D1BE14D571B78C42D83F9B3AF0B8B41465949179`.
+- PDF bytes: 382832.
+- PDF SHA256: `D87F6B88C548175E7B4BABB05B2AF07B3AB70B2CA4AC170D1CC3774C777CD467`.
 - Local `paper/main.pdf`: intentionally absent after export.
+- Link-box audit: VLA-style one-point boxes are explicit; citation links use
+  green boxes, the internal table reference uses a red box, and no cyan URL
+  boxes are present.
 - Full-scale suite: 85,674 streamed rows over 1,290 deterministic cases, seed 27027, zero plot failures.
 
 ## Thesis
